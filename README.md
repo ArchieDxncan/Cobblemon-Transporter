@@ -16,7 +16,7 @@ Cobblemon Transporter is a tool that bridges the gap between Pokémon and Minecr
 
 ## Diagram
 
-![Cobblemon Transporter Diagram](path/to/your/diagram.png) <!-- Replace with the path to your diagram -->
+![Cobblemon Transporter Diagram](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/transporter.png)
 
 ---
 
