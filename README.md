@@ -25,21 +25,25 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 - **Save File Integration**: Import/export Cobblemon and Pokémon to/from your game saves.
 - **User-Friendly Interface**: Hopefully simple and intuitive for all users.
 - **Pokémon Home/Bank Experience**: All imported Pokémon are stored in a nice UI for viewing.
+
 ---
 
 ## Instructions
 
 ### Installation
-1. Download the latest release from the [Releases page](#).
+1. Download this repository as a .zip and extract.
+2. Install Python
+3. Install dependencies from dependencies.txt
+
+---
 
 ### Usage
-1. Install Python
-2. Install dependencies from dependencies.txt
-3. Run the start.bat
-4. You can either import from Pokémon or Cobblemon from the file dropdown.
-5. Choose cobblemon .nbt or Pokémon .pb8 (.pk7/8/9 coming soon)
-6. Selected Pokémon should import into the cobblemon folder as .jsons.
-7. Export! To Cobblemon is a 1 by 1 Process which overwrites the Pokémon in the slot you choose.    
+1. Run the start.bat
+2. You can either import from Pokémon or Cobblemon from the file dropdown.
+3. Choose cobblemon .nbt or Pokémon .pb8 (.pk7/8/9 coming soon)
+4. Selected Pokémon should import into the cobblemon folder as .jsons.
+5. Export! To Cobblemon is a 1 by 1 Process which overwrites the Pokémon in the slot you choose.    
+
 ---
 
 ## Screenshots
