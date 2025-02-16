@@ -46,16 +46,10 @@
 
 ## Contributing
 
-I welcome contributions! If you'd like to contribute to the Cobblemon Transporter, please follow these steps:
+If you'd like to contribute to the Cobblemon Transporter, please follow these steps:
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
 3. Submit a pull request with a detailed description of your changes.
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as needed.
 
 ---
 
