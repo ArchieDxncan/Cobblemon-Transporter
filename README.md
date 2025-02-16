@@ -1,3 +1,5 @@
+# Page under construction
+
 # Cobblemon Transporter
 
 ![Cobblemon Transporter Logo](path/to/your/logo.png) <!-- Replace with the path to your logo -->
@@ -7,7 +9,7 @@
 ---
 
 ## Overview
-
+Cobblemon Transporter is a tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
 
 
 ---
@@ -20,9 +22,9 @@
 
 ## Capabilities
 
-- **Save File Integration**: Import/export Cobblemon from your game saves.
+- **Save File Integration**: Import/export Cobblemon and Pokémon to/from your game saves.
 - **User-Friendly Interface**: Hopefully simple and intuitive for all users.
-
+- **Pokémon Home/Bank Experience**: All imported Pokémon are stored in a nice UI for viewing.
 ---
 
 ## Instructions
@@ -31,7 +33,13 @@
 1. Download the latest release from the [Releases page](#).
 
 ### Usage
-
+1. Install Python
+2. Install dependencies from dependencies.txt
+3. Run the start.bat
+4. You can either import from Pokémon or Cobblemon from the file dropdown.
+5. Choose cobblemon .nbt or Pokémon .pb8 (.pk7/8/9 coming soon)
+6. Selected Pokémon should import into the cobblemon folder as .jsons.
+7. Export! To Cobblemon is a 1 by 1 Process which overwrites the Pokémon in the slot you choose.    
 ---
 
 ## Screenshots
