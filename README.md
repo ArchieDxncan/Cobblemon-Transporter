@@ -9,7 +9,7 @@
 ---
 
 ## Overview
-Cobblemon Transporter is a tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
+Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
 
 
 ---
