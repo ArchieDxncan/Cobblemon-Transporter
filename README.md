@@ -22,6 +22,17 @@ Shown Pokémon is not classed as legal. [ALM](https://github.com/architdate/PKHe
 
 ---
 
+##Limitations
+Due to the amount of Pokémon data that exists in Cobblemon, Pokémon exported to Cobblemon do not retain:
+ - Movesets
+ - OT
+ - Met Date, Location
+ - Origin Game
+ - PID, TID, SID
+ - Ribbons
+
+---
+
 ## Instructions
 
 ### Installation
