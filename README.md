@@ -23,18 +23,18 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 ## Instructions
 
 ### Installation
-1. Download this repository as a .zip and extract.
+1. [Grab the latest release](https://github.com/ArchieDxncan/cobblemon-transporter/releases/)
 2. Install Python
-3. Install dependencies from dependencies.txt
+3. Install dependencies from dependencies.bat
 
 ---
 
 ### Usage
 1. Run the start.bat
 2. You can either import from Pokémon or Cobblemon from the file dropdown.
-3. Choose cobblemon .nbt or Pokémon .pb8 (.pk7/8/9 coming soon)
-4. Selected Pokémon should import into the cobblemon folder as .jsons.
-5. Export! To Cobblemon is a 1 by 1 Process which overwrites the Pokémon in the slot you choose.    
+3. Import cobblemon .nbt or Pokémon .pb8 (.pk7/8/9 coming soon)
+4. Selected Pokémon should import into the cobblemon folder as .json.
+5. Export! However exporting to Cobblemon is a 1 by 1 Process which overwrites the Pokémon in the slot you choose.    
 
 ---
 
