@@ -1,7 +1,3 @@
-# Page under construction
-
-# Cobblemon Transporter
-
 ![Cobblemon Transporter Logo](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/cobblemontransporter.png) <!-- Replace with the path to your logo -->
 
 
