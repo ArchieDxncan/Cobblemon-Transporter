@@ -1,0 +1,50 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "JsonToPB8/1.0.0": {
+        "dependencies": {
+          "PKHeX.Core": "24.11.12",
+          "System.Net.Http.Json": "9.0.1"
+        },
+        "runtime": {
+          "JsonToPB8.dll": {}
+        }
+      },
+      "PKHeX.Core/24.11.12": {
+        "runtime": {
+          "lib/net9.0/PKHeX.Core.dll": {
+            "assemblyVersion": "24.11.11.0",
+            "fileVersion": "24.11.11.0"
+          }
+        }
+      },
+      "System.Net.Http.Json/9.0.1": {}
+    }
+  },
+  "libraries": {
+    "JsonToPB8/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "PKHeX.Core/24.11.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XCIYnEYe6Z7XZk9rkSg302U4NW/AwW5VeSBzf966MsYqz5zbIqc16qdmx538tYoQkL8BeRqpCcWOfbrNvbgrXw==",
+      "path": "pkhex.core/24.11.12",
+      "hashPath": "pkhex.core.24.11.12.nupkg.sha512"
+    },
+    "System.Net.Http.Json/9.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MhCJ2P2txSz4MMXi7TTutycFdbzPDU/A+pwUNpF6zvbDyZtFtvXJN4EEOuIq8b6sZfarakACnXqr0dTYGjUqzQ==",
+      "path": "system.net.http.json/9.0.1",
+      "hashPath": "system.net.http.json.9.0.1.nupkg.sha512"
+    }
+  }
+}

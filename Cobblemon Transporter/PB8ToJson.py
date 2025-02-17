@@ -1,0 +1,50 @@
+import os
+import subprocess
+import tkinter as tk
+from tkinter import messagebox, filedialog
+
+# Get the current script directory
+current_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Define the pokemon directory path
+pokemon_directory = os.path.join(current_directory, 'cobblemon')
+
+# Function to show a confirmation popup
+def confirm_import():
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    return messagebox.askyesno("Confirmation", "Do you want to import a Pokemon .pb8 file?")
+
+# If the user clicks "No", exit the script
+if not confirm_import():
+    print("Import canceled.")
+    exit(0)
+
+# Locate PB8ToJson.exe in the same directory as this script
+pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+
+# Ensure the executable exists
+if not os.path.isfile(pb8_to_json_exe):
+    print(f"Error: {pb8_to_json_exe} not found.")
+    exit(1)
+
+# Open a file dialog to select multiple .pb8 files
+root = tk.Tk()
+root.withdraw()  # Hide the main window
+pb8_files = filedialog.askopenfilenames(
+    initialdir=pokemon_directory,
+    title="Select .pb8 files",
+    filetypes=(("PB8 files", "*.pb8"), ("All files", "*.*"))
+)
+
+# Check if any files were selected
+if not pb8_files:
+    print("No files selected.")
+    exit(0)
+
+# Loop through the selected files and run PB8ToJson.exe on each
+for pb8_file in pb8_files:
+    subprocess.run([pb8_to_json_exe, pb8_file])
+
+print("Conversion completed.")
