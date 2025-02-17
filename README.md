@@ -52,9 +52,3 @@ If you'd like to contribute to the Cobblemon Transporter, please follow these st
 3. Submit a pull request with a detailed description of your changes.
 
 ---
-
-## Support
-
-For questions, issues, or feature requests, please message me on discord @miniduncan
-
----
