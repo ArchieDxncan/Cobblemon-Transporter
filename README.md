@@ -7,7 +7,7 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 ---
 
 ## Screenshots
-
+Cobblemon -> Pokémon
 ![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG) 
 ![Screenshot 2](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble2.png) 
 ![Screenshot 3](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble3.PNG) 
@@ -23,7 +23,8 @@ Shown Pokémon is not classed as legal. [ALM](https://github.com/architdate/PKHe
 ---
 
 ## Limitations
-Due to the limitations of stored Pokémon data, Pokémon exported to Cobblemon do not retain:
+
+Due to the limitations of stored Cobblemon, Pokémon exported to Cobblemon do not retain:
  - Movesets
  - OT
  - Met Date, Location
