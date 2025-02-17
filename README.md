@@ -6,9 +6,9 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 
 ---
 
-## Diagram
+## Screenshots
 
-![Cobblemon Transporter Diagram](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/transporter.png)
+![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG) 
 
 ---
 
@@ -38,9 +38,9 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 
 ---
 
-## Screenshots
+## Diagram
 
-![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG) 
+![Cobblemon Transporter Diagram](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/transporter.png)
 
 ---
 
