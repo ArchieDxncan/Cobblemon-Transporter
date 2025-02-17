@@ -2,7 +2,7 @@
 
 # Cobblemon Transporter
 
-![Cobblemon Transporter Logo](path/to/your/logo.png) <!-- Replace with the path to your logo -->
+![Cobblemon Transporter Logo](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/cobblemontransporter.png) <!-- Replace with the path to your logo -->
 
 
 
