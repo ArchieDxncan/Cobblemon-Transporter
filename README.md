@@ -11,7 +11,7 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 ![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG) 
 ![Screenshot 2](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble2.png) 
 ![Screenshot 3](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble3.PNG) 
-
+Shown Pokémon is not classed as legal. [ALM](https://github.com/architdate/PKHeX-Plugins) would be needed if you want to store in Pokémon Home or trade to a real console using SysBot.
 ---
 
 ## Capabilities
