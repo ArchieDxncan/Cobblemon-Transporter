@@ -10,7 +10,7 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 
 ![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG)
 
-Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKHeX-Plugins) would be needed if you want to store in Pokémon Home or trade to a real console using SysBot.
+Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKHeX-Plugins) would be needed if you want to store in Pokémon Home or trade to a non-hacked Switch using SysBot.
 
 <details>
 <summary>Talonflame (Angry Bird)</summary>
