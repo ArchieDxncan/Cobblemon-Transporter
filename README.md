@@ -8,19 +8,32 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 
 ## Screenshots
 
-PC MENU
-![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG) 
+![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble1.PNG)
 
 Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKHeX-Plugins) would be needed if you want to store in Pokémon Home or trade to a real console using SysBot.
-Talonflame (Angry Bird) in original game
-![Screenshot 2](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble2.png) #
-Talonflame (Angry Bird) exported to SV
-![Screenshot 3](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble3.PNG) 
 
-Alolan-Dugtrio in original game
-![Screenshot 4](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble4.PNG) 
-Alolan-Dugtrio exported to USUM
-![Screenshot 5](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble5.png) 
+<details>
+<summary>Talonflame (Angry Bird)</summary>
+
+- **Original Game**  
+  ![Screenshot 2](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble2.png)  
+
+- **Exported to SV**  
+  ![Screenshot 3](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble3.PNG)  
+
+</details>
+
+<details>
+<summary>Alolan-Dugtrio</summary>
+
+- **Original Game**  
+  ![Screenshot 4](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble4.PNG)  
+
+- **Exported to USUM**  
+  ![Screenshot 5](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobble5.png)  
+
+</details>
+
 ---
 
 ## Capabilities
