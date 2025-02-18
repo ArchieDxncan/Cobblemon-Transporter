@@ -58,7 +58,8 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'level' in new_data:
         existing_slot['Level'] = nbtlib.Int(new_data['level'])
     if 'ability' in new_data:
-        existing_slot['Ability'] = nbtlib.Compound({'AbilityName': nbtlib.String(new_data['ability'])})
+        clean_ability = new_data['ability'].replace('-', '').lower()
+        existing_slot['Ability'] = nbtlib.Compound({'AbilityName': nbtlib.String(clean_ability)})
     
     # Merge moves
     #if 'moves' in new_data:
