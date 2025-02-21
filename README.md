@@ -66,6 +66,7 @@ Due to the constraints of Cobblemon's data structure, Pokémon exported to Cobbl
 ---
 
 ### Usage
+Cobblemon save files are stored in your world folder at pokemon/playerpartystore and pokemon/pcstore under your Minecraft UUID
 1. Launch the tool by running start.bat
 2. Use the file dropdown to import from either Pokémon or Cobblemon.
 3. Import .nbt files for Cobblemon or .pb8/.pk9 files for Pokémon.
