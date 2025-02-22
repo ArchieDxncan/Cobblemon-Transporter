@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
 import subprocess
@@ -283,6 +283,36 @@ class PokemonHomeApp:
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"Failed to execute PB8ToJson.py: {e}")
 
+    def mass_convert_to_pb8(self):
+        """Convert selected JSON files to .pb8 using an external .exe."""
+        
+        # Open a file dialog to select the JSON files
+        json_file_paths = filedialog.askopenfilenames(filetypes=[("JSON files", "*.json")])
+        
+        if not json_file_paths:
+            # User canceled the file selection
+            return
+
+        # Assuming the .exe is named "converter.exe" and is in the same directory as the script
+        converter_exe = "JsonToPB8/JsonToPB8.exe"
+        if not os.path.exists(converter_exe):
+            messagebox.showerror("Error", "Converter executable not found!")
+            return
+
+        for json_file_path in json_file_paths:
+            if not os.path.exists(json_file_path):
+                messagebox.showerror("Error", f"File not found: {json_file_path}")
+                continue
+
+            try:
+                # Run the converter .exe with the JSON file as an argument
+                subprocess.run([converter_exe, json_file_path], check=True)
+                messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.pb8 created!")
+            except subprocess.CalledProcessError as e:
+                messagebox.showerror("Error", f"Conversion failed for {json_file_path}: {e}")
+            except Exception as e:
+                messagebox.showerror("Error", f"An unexpected error occurred for {json_file_path}: {e}")
+
     def create_menu(self):
         """Create a menu bar with save and load options."""
         menu_bar = tk.Menu(self.root)
@@ -293,6 +323,7 @@ class PokemonHomeApp:
 
         file_menu.add_command(label="Load Pokémon Data", command=self.load_pokemon_data)  # New option
         file_menu.add_command(label="Export to Cobblemon", command=self.run_export_script)  # New option
+        file_menu.add_command(label="Export to Pokémon", command=self.mass_convert_to_pb8)  # New option
         file_menu.add_command(label="Import .dat", command=self.run_parser_script)  # New option
         file_menu.add_command(label="Import .pb8", command=self.run_pb8_to_json_script)  # New option
         file_menu.add_separator()

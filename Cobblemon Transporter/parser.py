@@ -80,7 +80,7 @@ def extract_pokemon_data(nbt_data, slot):
         # Extract species and remove 'cobblemon:' prefix if it exists
         species = pokemon_data['Species']
         if species.startswith('cobblemon:'):
-            species = species[len('cobblemon:'):].capitalize()
+            species = species[len('cobblemon:'):]
             
         level = int(pokemon_data['Level'])  # Convert to int
 
@@ -91,6 +91,9 @@ def extract_pokemon_data(nbt_data, slot):
         ability = pokemon_data['Ability']['AbilityName']
         if ability in hyphen_moves:
             ability = hyphen_moves[ability].capitalize()
+
+        if species in hyphen_moves:
+            species = hyphen_moves[species].capitalize()
 
         for move_data in pokemon_data['MoveSet']:  # Loop through the list of Compound objects
             move_name = move_data.get('MoveName', 'Unknown')  # Access MoveName from each Compound
@@ -131,7 +134,7 @@ def extract_pokemon_data(nbt_data, slot):
         form_id = pokemon_data.get('FormId', 'normal')
         uuid = list(pokemon_data.get('UUID', []))  # Convert UUID to a list
         scale_modifier = float(pokemon_data.get('ScaleModifier', 1.0))
-        nickname = pokemon_data.get('Nickname', species)
+        nickname = pokemon_data.get('Nickname', species.capitalize())
 
         # Create a simple dictionary with extracted data
         pokemon_info = {
