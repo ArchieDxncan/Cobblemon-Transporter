@@ -1,11 +1,12 @@
 ![Cobblemon Transporter Logo](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobblemontransporter.png) <!-- Replace with the path to your logo -->
 
-## Overview
-Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
-
 ![GitHub License](https://img.shields.io/github/license/ArchieDxncan/Cobblemon-Transporter?color=blue)  
 ![GitHub Release](https://img.shields.io/github/v/release/ArchieDxncan/Cobblemon-Transporter?include_prereleases)  
 ![GitHub Issues](https://img.shields.io/github/issues/ArchieDxncan/Cobblemon-Transporter)  
+
+## Overview
+Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
+
 ---
 
 ## Screenshots
