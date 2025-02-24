@@ -7,6 +7,8 @@
 ## Overview
 Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Minecraft. Allowing Pokémon to travel both ways. 
 
+[Please consider using my Cobblemon sidemod if you aren't already, it allows you to import more data such Met Date and Met Level!](https://www.curseforge.com/minecraft/mc-mods/cobblemon-extra-data)
+
 ---
 
 ## Screenshots
