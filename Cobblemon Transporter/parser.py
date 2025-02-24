@@ -6,6 +6,7 @@ import os
 import requests
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from datetime import date
 
 # Cache for UUID-to-username mappings
 uuid_cache = {}
@@ -136,6 +137,16 @@ def extract_pokemon_data(nbt_data, slot):
         scale_modifier = float(pokemon_data.get('ScaleModifier', 1.0))
         nickname = pokemon_data.get('Nickname', species.capitalize())
 
+        # Extract MetDate, MetLevel, and MetLocation from PersistentData
+        persistent_data = pokemon_data.get('PersistentData', {})
+
+        date_today = date.today().strftime('%Y-%m-%d')  # Format the date as YYYY-MM-DD
+        met_date = persistent_data.get('MetDate', date_today)
+        met_level = persistent_data.get('MetLevel', level)
+        met_location = persistent_data.get('MetLocation', 'a lovely place')
+
+        origin_game = persistent_data.get('OriginGame', 'Cobblemon')
+
         # Create a simple dictionary with extracted data
         pokemon_info = {
             "species": species,
@@ -159,7 +170,11 @@ def extract_pokemon_data(nbt_data, slot):
             "tera_type": tera_type,
             "form_id": form_id,
             "uuid": uuid,
-            "scale_modifier": scale_modifier
+            "scale_modifier": scale_modifier,
+            "met_date": met_date,
+            "met_level": met_level,
+            "met_location": met_location,
+            "origin_game": origin_game
         }
 
         return pokemon_info
