@@ -152,6 +152,17 @@ def extract_pokemon_data(nbt_data, slot):
         pid = persistent_data.get('PID', )
         sid = persistent_data.get('SID', )
 
+        # Extract Home Tracker, Encryption Constant, Height, Weight, Scale, Ribbons, and Relearn Move Flags
+        home_tracker = int(persistent_data.get('HomeTracker', 0))
+        encryption_constant = int(persistent_data.get('EncryptionConstant', 0))
+        height = int(persistent_data.get('Height', 0))
+        weight = int(persistent_data.get('Weight', 0))
+        scale = int(persistent_data.get('Scale', 0))
+        ribbons = list(persistent_data.get('Ribbons', []))
+        # Convert relearn flags to boolean values (true/false)
+        relearn_flags = [bool(flag) for flag in persistent_data.get('RelearnFlags', [])]
+        fateful_encounter = bool(persistent_data.get('FatefulEncounter', False))
+
         # Create a simple dictionary with extracted data
         pokemon_info = {
             "species": species,
@@ -183,7 +194,15 @@ def extract_pokemon_data(nbt_data, slot):
             "language": language,
             "tid": tid,
             "pid": pid,
-            "sid": sid
+            "sid": sid,
+            "home_tracker": home_tracker,
+            "encryption_constant": encryption_constant,
+            "height": height,
+            "weight": weight,
+            "scale": scale,
+            "ribbons": ribbons,
+            "relearn_flags": relearn_flags,
+            "fateful_encounter": fateful_encounter
         }
 
         return pokemon_info

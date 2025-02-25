@@ -142,6 +142,24 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'original_trainer' in new_data:
         persistent_data['OriginalTrainer'] = nbtlib.String(new_data['original_trainer'])
 
+    # Restore Home Tracker, Encryption Constant, Height, Weight, Scale, Ribbons, and Relearn Move Flags
+    if 'home_tracker' in new_data:
+        persistent_data['HomeTracker'] = nbtlib.Long(new_data['home_tracker'])
+    if 'encryption_constant' in new_data:
+        persistent_data['EncryptionConstant'] = nbtlib.Int(new_data['encryption_constant'])
+    if 'height' in new_data:
+        persistent_data['Height'] = nbtlib.Byte(new_data['height'])
+    if 'weight' in new_data:
+        persistent_data['Weight'] = nbtlib.Byte(new_data['weight'])
+    if 'scale' in new_data:
+        persistent_data['Scale'] = nbtlib.Byte(new_data['scale'])
+    if 'ribbons' in new_data:
+        persistent_data['Ribbons'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(r) for r in new_data['ribbons']])
+    if 'relearn_flags' in new_data:
+        persistent_data['RelearnFlags'] = nbtlib.List[nbtlib.Byte]([nbtlib.Byte(f) for f in new_data['relearn_flags']])
+    if 'fateful_encounter' in new_data:
+        persistent_data['FatefulEncounter'] = nbtlib.Byte(new_data['fateful_encounter'])
+
     existing_slot['PersistentData'] = persistent_data
 
     return existing_slot
