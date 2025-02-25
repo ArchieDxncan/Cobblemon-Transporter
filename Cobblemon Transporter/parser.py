@@ -147,10 +147,10 @@ def extract_pokemon_data(nbt_data, slot):
 
         origin_game = persistent_data.get('OriginGame', 'Cobblemon')
         original_trainer = persistent_data.get('OriginalTrainer', fetch_username_from_uuid(original_trainer_uuid))
-        language = persistent_data.get('Language', '2')
-        tid = persistent_data.get('TID', '')
-        pid = persistent_data.get('PID', '')
-        sid = persistent_data.get('SID', '')
+        language = persistent_data.get('Language', 2)
+        tid = persistent_data.get('TID', )
+        pid = persistent_data.get('PID', )
+        sid = persistent_data.get('SID', )
 
         # Create a simple dictionary with extracted data
         pokemon_info = {
