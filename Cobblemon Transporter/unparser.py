@@ -107,7 +107,10 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'gmax_level' in new_data:
         existing_slot['DmaxLevel'] = nbtlib.Int(new_data['gmax_level'])
     if 'tera_type' in new_data:
-        existing_slot['TeraType'] = nbtlib.String(new_data['tera_type'])
+        tera_type_value = new_data['tera_type'].lower()
+        if not tera_type_value.startswith("cobblemon:"):
+            tera_type_value = "cobblemon:" + tera_type_value
+        existing_slot['TeraType'] = nbtlib.String(tera_type_value)
     if 'form_id' in new_data:
         existing_slot['FormId'] = nbtlib.String(new_data['form_id'])
     #if 'uuid' in new_data:
@@ -116,6 +119,30 @@ def merge_pokemon_data(existing_slot, new_data):
         existing_slot['ScaleModifier'] = nbtlib.Float(new_data['scale_modifier'])
     if 'nickname' in new_data:
         existing_slot['Nickname'] = nbtlib.String(new_data['nickname'])
+
+    # Handle PersistentData/CobbleExtraData
+    persistent_data = existing_slot.get('PersistentData', nbtlib.Compound())
+    
+    if 'met_location' in new_data:
+        persistent_data['MetLocation'] = nbtlib.String(new_data['met_location'])
+    if 'met_level' in new_data:
+        persistent_data['MetLevel'] = nbtlib.Int(new_data['met_level'])
+    if 'met_date' in new_data:
+        persistent_data['MetDate'] = nbtlib.String(new_data['met_date'])
+    if 'tid' in new_data:
+        persistent_data['TID'] = nbtlib.Int(new_data['tid'])
+    if 'pid' in new_data:
+        persistent_data['PID'] = nbtlib.Int(new_data['pid'])
+    if 'sid' in new_data:
+        persistent_data['SID'] = nbtlib.Int(new_data['sid'])
+    if 'language' in new_data:
+        persistent_data['Language'] = nbtlib.Int(new_data['language'])
+    if 'origin_game' in new_data:
+        persistent_data['OriginGame'] = nbtlib.String(new_data['origin_game'])
+    if 'original_trainer' in new_data:
+        persistent_data['OriginalTrainer'] = nbtlib.String(new_data['original_trainer'])
+
+    existing_slot['PersistentData'] = persistent_data
 
     return existing_slot
 

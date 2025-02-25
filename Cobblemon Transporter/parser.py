@@ -146,6 +146,11 @@ def extract_pokemon_data(nbt_data, slot):
         met_location = persistent_data.get('MetLocation', 'a lovely place')
 
         origin_game = persistent_data.get('OriginGame', 'Cobblemon')
+        original_trainer = persistent_data.get('OriginalTrainer', fetch_username_from_uuid(original_trainer_uuid))
+        language = persistent_data.get('Language', '2')
+        tid = persistent_data.get('TID', '')
+        pid = persistent_data.get('PID', '')
+        sid = persistent_data.get('SID', '')
 
         # Create a simple dictionary with extracted data
         pokemon_info = {
@@ -174,7 +179,11 @@ def extract_pokemon_data(nbt_data, slot):
             "met_date": met_date,
             "met_level": met_level,
             "met_location": met_location,
-            "origin_game": origin_game
+            "origin_game": origin_game,
+            "language": language,
+            "tid": tid,
+            "pid": pid,
+            "sid": sid
         }
 
         return pokemon_info
