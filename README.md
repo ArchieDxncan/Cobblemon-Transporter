@@ -53,11 +53,6 @@ Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKH
 
 Due to the constraints of Cobblemon's data structure, Pokémon exported to Cobblemon will not retain the following details:
  - Movesets
- - OT (Original Trainer)
- - Met Date, Location
- - Origin Game
- - PID, TID, SID
- - Ribbons
 
 ---
 
