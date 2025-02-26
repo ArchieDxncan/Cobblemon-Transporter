@@ -130,11 +130,11 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'met_date' in new_data:
         persistent_data['MetDate'] = nbtlib.String(new_data['met_date'])
     if 'tid' in new_data:
-        persistent_data['TID'] = nbtlib.Int(new_data['tid'])
+        persistent_data['TID'] = nbtlib.Long(new_data['tid'])
     if 'pid' in new_data:
-        persistent_data['PID'] = nbtlib.Int(new_data['pid'])
+        persistent_data['PID'] = nbtlib.Long(new_data['pid'])
     if 'sid' in new_data:
-        persistent_data['SID'] = nbtlib.Int(new_data['sid'])
+        persistent_data['SID'] = nbtlib.Long(new_data['sid'])
     if 'language' in new_data:
         persistent_data['Language'] = nbtlib.Int(new_data['language'])
     if 'origin_game' in new_data:
@@ -146,13 +146,13 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'home_tracker' in new_data:
         persistent_data['HomeTracker'] = nbtlib.Long(new_data['home_tracker'])
     if 'encryption_constant' in new_data:
-        persistent_data['EncryptionConstant'] = nbtlib.Int(new_data['encryption_constant'])
+        persistent_data['EncryptionConstant'] = nbtlib.Long(new_data['encryption_constant'])
     if 'height' in new_data:
-        persistent_data['Height'] = nbtlib.Byte(new_data['height'])
+        persistent_data['Height'] = nbtlib.Int(new_data['height'])
     if 'weight' in new_data:
-        persistent_data['Weight'] = nbtlib.Byte(new_data['weight'])
+        persistent_data['Weight'] = nbtlib.Int(new_data['weight'])
     if 'scale' in new_data:
-        persistent_data['Scale'] = nbtlib.Byte(new_data['scale'])
+        persistent_data['Scale'] = nbtlib.Int(new_data['scale'])
     if 'ribbons' in new_data:
         persistent_data['Ribbons'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(r) for r in new_data['ribbons']])
     if 'relearn_flags' in new_data:

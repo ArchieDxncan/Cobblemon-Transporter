@@ -123,7 +123,7 @@ class PokemonHomeApp:
         self.notebook.add(self.moves_tab, text="Moves")
 
         # Add "Convert to .pb8" button
-        self.convert_button = ttk.Button(self.details_frame, text="Convert to .pb8", command=self.convert_to_pb8)
+        self.convert_button = ttk.Button(self.details_frame, text="Convert to .cb9", command=self.convert_to_pb8)
         self.convert_button.pack(pady=10)
 
     def show_pokemon_info(self, event, grid_type, index):
@@ -221,7 +221,7 @@ class PokemonHomeApp:
         try:
             # Run the converter .exe with the JSON file as an argument
             subprocess.run([converter_exe, json_file_path], check=True)
-            messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.pb8 created!")
+            messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.cb9 created!")
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"Conversion failed: {e}")
 
@@ -307,7 +307,7 @@ class PokemonHomeApp:
             try:
                 # Run the converter .exe with the JSON file as an argument
                 subprocess.run([converter_exe, json_file_path], check=True)
-                messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.pb8 created!")
+                messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.cb9 created!")
             except subprocess.CalledProcessError as e:
                 messagebox.showerror("Error", f"Conversion failed for {json_file_path}: {e}")
             except Exception as e:
@@ -325,7 +325,7 @@ class PokemonHomeApp:
         file_menu.add_command(label="Export to Cobblemon", command=self.run_export_script)  # New option
         file_menu.add_command(label="Export to Pokémon", command=self.mass_convert_to_pb8)  # New option
         file_menu.add_command(label="Import .dat", command=self.run_parser_script)  # New option
-        file_menu.add_command(label="Import .pb8", command=self.run_pb8_to_json_script)  # New option
+        file_menu.add_command(label="Import .pk9", command=self.run_pb8_to_json_script)  # New option
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 

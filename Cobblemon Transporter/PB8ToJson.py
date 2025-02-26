@@ -13,7 +13,7 @@ pokemon_directory = os.path.join(current_directory, 'cobblemon')
 def confirm_import():
     root = tk.Tk()
     root.withdraw()  # Hide the main window
-    return messagebox.askyesno("Confirmation", "Do you want to import a Pokemon .pb8 file?")
+    return messagebox.askyesno("Confirmation", "Do you want to import a Pokemon .pk9 file?")
 
 # If the user clicks "No", exit the script
 if not confirm_import():
@@ -35,7 +35,7 @@ root.withdraw()  # Hide the main window
 pb8_files = filedialog.askopenfilenames(
     initialdir=pokemon_directory,
     title="Select .pb8 files",
-    filetypes=(("PB8 files", "*.pb8"), ("All files", "*.*"))
+    filetypes=((".pk* files", "*.pk9"), ("All files", "*.*"))
 )
 
 # Check if any files were selected
