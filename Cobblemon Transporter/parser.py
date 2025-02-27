@@ -163,6 +163,14 @@ def extract_pokemon_data(nbt_data, slot):
         relearn_flags = [bool(flag) for flag in persistent_data.get('RelearnFlags', [])]
         fateful_encounter = bool(persistent_data.get('FatefulEncounter', False))
 
+        memory_data = persistent_data.get('Memories', {})
+        memories = {
+            "memory_type": memory_data.get('MemoryType', 0),
+            "memory_intensity": memory_data.get('MemoryIntensity', 0),
+            "memory_feeling": memory_data.get('MemoryFeeling', 0),
+            "memory_variable": memory_data.get('MemoryVariable', 0),
+        }
+
         # Create a simple dictionary with extracted data
         pokemon_info = {
             "species": species,
@@ -202,7 +210,8 @@ def extract_pokemon_data(nbt_data, slot):
             "scale": scale,
             "ribbons": ribbons,
             "relearn_flags": relearn_flags,
-            "fateful_encounter": fateful_encounter
+            "fateful_encounter": fateful_encounter,
+            "memories": memories
         }
 
         return pokemon_info

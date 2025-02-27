@@ -59,6 +59,7 @@ def merge_pokemon_data(existing_slot, new_data):
         existing_slot['Level'] = nbtlib.Int(new_data['level'])
     if 'ability' in new_data:
         clean_ability = new_data['ability'].replace('-', '').lower()
+        clean_ability = clean_ability.capitalize()
         existing_slot['Ability'] = nbtlib.Compound({'AbilityName': nbtlib.String(clean_ability)})
     
     # Merge moves
@@ -159,6 +160,18 @@ def merge_pokemon_data(existing_slot, new_data):
         persistent_data['RelearnFlags'] = nbtlib.List[nbtlib.Byte]([nbtlib.Byte(f) for f in new_data['relearn_flags']])
     if 'fateful_encounter' in new_data:
         persistent_data['FatefulEncounter'] = nbtlib.Byte(new_data['fateful_encounter'])
+
+    # Handle memory data
+    if 'memories' in new_data:
+        memory_data = new_data['memories']
+        persistent_data = existing_slot.get('PersistentData', nbtlib.Compound())
+        memories = nbtlib.Compound({
+            'MemoryType': nbtlib.Int(memory_data.get('memory_type', 0)),
+            'MemoryIntensity': nbtlib.Int(memory_data.get('memory_intensity', 0)),
+            'MemoryFeeling': nbtlib.Int(memory_data.get('memory_feeling', 0)),
+            'MemoryVariable': nbtlib.Int(memory_data.get('memory_variable', 0)),
+        })
+        persistent_data['Memories'] = memories
 
     existing_slot['PersistentData'] = persistent_data
 

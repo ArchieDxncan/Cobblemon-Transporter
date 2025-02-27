@@ -2,16 +2,16 @@
 echo Installing required Python packages...
 
 :: Install nbtlib
-pip install nbtlib
+python -m pip install nbtlib
 
 :: Install requests
-pip install requests
+python -m pip install requests
 
 :: Install Pillow (for image handling in pokemonpc.py)
-pip install pillow
+python -m pip install pillow
 
 :: Install tkinter (usually comes with Python, but just in case)
-pip install tk
+python -m pip install tk
 
 echo All dependencies installed successfully.
 pause
