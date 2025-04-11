@@ -13,5 +13,7 @@ python -m pip install pillow
 :: Install tkinter (usually comes with Python, but just in case)
 python -m pip install tk
 
+python -m pip install tkinterdnd2
+
 echo All dependencies installed successfully.
 pause

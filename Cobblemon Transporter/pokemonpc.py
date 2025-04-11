@@ -5,6 +5,8 @@ import os
 import subprocess
 import hashlib
 from PIL import Image, ImageTk
+from tkinterdnd2 import TkinterDnD, DND_FILES  # Import tkinterdnd2
+import re
 
 # Constants
 GRID_ROWS = 5
@@ -18,7 +20,7 @@ SHINY_SPRITES_FOLDER = "sprites/shiny"  # Path to the folder where Shiny Pokémo
 class PokemonHomeApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pokémon PC")
+        self.root.title("Cobblemon Transporter")
         
         # Local storage for Pokémon data
         self.local_storage = [[None] * BOX_SIZE for _ in range(TOTAL_BOXES)]  # Multiple boxes
@@ -41,6 +43,58 @@ class PokemonHomeApp:
 
         # Load Pokémon data from JSON files in the "cobblemon" folder
         self.load_pokemon_data()
+
+        # Set up drag-and-drop
+        self.setup_drag_and_drop()
+
+    def setup_drag_and_drop(self):
+        """Set up drag-and-drop functionality for .pk9 files."""
+        self.root.drop_target_register(DND_FILES)
+        self.root.dnd_bind('<<Drop>>', self.on_drop)
+
+    def on_drop(self, event):
+        """Handle dropped files."""
+        # Use regex to properly extract file paths including those with spaces.
+        file_paths = re.findall(r'\{.*?\}|\S+', event.data)
+
+        # Remove surrounding braces from paths like {C:\Some Folder\file.pk9}
+        file_paths = [path.strip("{}") for path in file_paths]
+
+        # Supported file extensions
+        supported_extensions = {'.pk9', '.cb9', '.pb8'}
+
+        for file_path in file_paths:
+            if any(file_path.lower().endswith(ext) for ext in supported_extensions):
+                self.convert_file_to_json(file_path)
+            else:
+                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8).")
+
+    def convert_pk9_to_json(self, file_path):
+        """Convert a .pk9 file to JSON using the PB8ToJson.py script."""
+        try:
+            subprocess.run(["python", "PB8ToJson.py", file_path], check=True)
+            #messagebox.showinfo("Success", f"Conversion successful: {file_path} converted to JSON!")
+            self.load_pokemon_data()
+        except subprocess.CalledProcessError as e:
+            messagebox.showerror("Error", f"Conversion failed: {e}")
+    
+    def convert_file_to_json(self, file_path):
+        # Get the current script directory
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+
+        # Locate PB8ToJson.exe in the same directory as this script
+        pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+        pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+
+        # Ensure the executable exists
+        if not os.path.isfile(pb8_to_json_exe):
+            print(f"Error: {pb8_to_json_exe} not found.")
+            exit(1)
+        
+        subprocess.run([pb8_to_json_exe, file_path])
+        self.load_pokemon_data()
+
+        print("Conversion completed.")
 
     def create_grids(self):
         """Create a grid for local storage."""
@@ -102,7 +156,9 @@ class PokemonHomeApp:
                 else:
                     button.config(bg="green", text=pokemon['species'])
             else:
+                # Clear both image and text if slot is empty
                 button.config(bg="lightgrey", text="", image=None)
+                button.image = None  # Ensure previous sprite reference is removed
 
     def create_details_panel(self):
         """Create a panel to display Pokémon details with tabs."""
@@ -331,6 +387,6 @@ class PokemonHomeApp:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = TkinterDnD.Tk()  # Use TkinterDnD's Tk instead of tk.Tk
     app = PokemonHomeApp(root)
     root.mainloop()

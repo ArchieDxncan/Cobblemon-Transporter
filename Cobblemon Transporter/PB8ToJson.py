@@ -10,15 +10,15 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 pokemon_directory = os.path.join(current_directory, 'cobblemon')
 
 # Function to show a confirmation popup
-def confirm_import():
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    return messagebox.askyesno("Confirmation", "Do you want to import a Pokemon .pk9 file?")
+#def confirm_import():
+    #root = tk.Tk()
+    #root.withdraw()  # Hide the main window
+    #return messagebox.askyesno("Confirmation", "Do you want to import a Pokemon .pk9 file?")
 
 # If the user clicks "No", exit the script
-if not confirm_import():
-    print("Import canceled.")
-    exit(0)
+#if not confirm_import():
+#    print("Import canceled.")
+#    exit(0)
 
 # Locate PB8ToJson.exe in the same directory as this script
 pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')

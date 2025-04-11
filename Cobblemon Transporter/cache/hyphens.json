@@ -238,7 +238,7 @@
   "landswrath": "land's-wrath",
   "laserfocus": "laser-focus",
   "lavaplume": "lava-plume",
-  "leafage": "leaf-age",
+  "leafage": "leafage",
   "leafblade": "leaf-blade",
   "leafstorm": "leaf-storm",
   "leaftornado": "leaf-tornado",
@@ -884,5 +884,9 @@
   "chienpao": "chien-pao",
   "brutebonnet": "brute-bonnet",
   "mrrime": "mr-rime",
-  "dragonbreath": "dragon-breath"
+  "dragonbreath": "dragon-breath",
+  "roaringmoon": "roaring-moon",
+  "mindseye": "minds-eye",
+  "aromaticmist": "aromatic-mist",
+  "disarmingvoice": "disarming-voice"
 }

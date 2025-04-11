@@ -19,10 +19,10 @@ def select_file():
     root = tk.Tk()
     root.withdraw()  # Hide the main window
 
-    response = messagebox.askyesno("Import Cobblemon?", "Do you want to import a Cobblemon .dat file?")
-    if not response:
-        print("Import canceled.")
-        return None
+    #response = messagebox.askyesno("Import Cobblemon?", "Do you want to import a Cobblemon .dat file?")
+    #if not response:
+    #    print("Import canceled.")
+    #    return None
     
     file_path = filedialog.askopenfilename(title="Select Cobblemon .dat file", filetypes=[("DAT Files", "*.dat")])
     if not file_path:
