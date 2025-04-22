@@ -2,7 +2,9 @@ import nbtlib
 import json
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+import random
+from tkinter import filedialog, messagebox
+import copy
 
 # Directory for JSON files
 JSON_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cobblemon')
@@ -11,22 +13,17 @@ def select_json_files():
     root = tk.Tk()
     root.withdraw()  # Hide the main window
 
-    response = messagebox.askyesno("Export to Cobblemon?", "This will overwrite a Pokémon slot.")
+    response = messagebox.askyesno("Export to Cobblemon?", "Ensure you have a Pokemon in your party/boxes.")
     if not response:
         print("Export canceled.")
-        return None, None
+        return None
     
     file_paths = filedialog.askopenfilenames(title="Select Cobblemon JSON file", filetypes=[("JSON Files", "*.json")], initialdir=JSON_DIR)
     if not file_paths:
         print("No files selected. Exiting.")
-        return None, None
+        return None
     
-    slot = simpledialog.askinteger("Select Slot", "Enter the slot number to overwrite (0-5):", minvalue=0, maxvalue=5)
-    if slot is None:
-        print("Slot selection canceled. Exiting.")
-        return None, None
-    
-    return file_paths, slot
+    return file_paths
 
 def select_dat_file():
     root = tk.Tk()
@@ -47,6 +44,69 @@ def load_json(file_path):
         print(f"Error loading JSON file {file_path}: {e}")
         return None
 
+def generate_uuid():
+    """Generate a UUID as a list of 4 random integers that can be positive or negative"""
+    # Using the same range as Java's random.nextInt() which can generate 32-bit signed integers
+    return [random.randint(-2147483648, 2147483647) for _ in range(4)]
+
+def detect_dat_type(nbt_data):
+    """Detect whether the .dat file is for party or boxes"""
+    # Check for Box0, Box1, etc.
+    if any(key.startswith('Box') for key in nbt_data.keys()):
+        return 'boxes'
+    # Check for Slot0, Slot1, etc.
+    elif any(key.startswith('Slot') for key in nbt_data.keys()):
+        return 'party'
+    else:
+        return 'unknown'
+
+def find_existing_pokemon_and_free_slots_party(nbt_data, num_needed):
+    """Find an existing Pokémon and multiple free slots in party data"""
+    existing_slot_index = None
+    free_slot_indices = []
+    
+    for i in range(6):  # Check slots 0-5
+        slot_key = f'Slot{i}'
+        slot_data = nbt_data.get(slot_key)
+        
+        if slot_data and 'Species' in slot_data and existing_slot_index is None:
+            existing_slot_index = i
+        elif not slot_data:
+            free_slot_indices.append(i)
+            
+        if existing_slot_index is not None and len(free_slot_indices) >= num_needed:
+            break
+    
+    return existing_slot_index, free_slot_indices[:num_needed]
+
+def find_existing_pokemon_and_free_slots_boxes(nbt_data, num_needed):
+    """Find an existing Pokémon and multiple free slots in box data"""
+    existing_location = None  # (box_index, slot_index)
+    free_locations = []  # [(box_index, slot_index), ...]
+    
+    box_index = 0
+    while True:
+        box_key = f'Box{box_index}'
+        if box_key not in nbt_data:
+            break
+            
+        box_data = nbt_data[box_key]
+        for slot_index in range(30):  # Assuming 30 slots per box
+            slot_key = f'Slot{slot_index}'
+            slot_data = box_data.get(slot_key)
+            
+            if slot_data and 'Species' in slot_data and existing_location is None:
+                existing_location = (box_index, slot_index)
+            elif not slot_data or len(slot_data) == 0:
+                free_locations.append((box_index, slot_index))
+                
+            if existing_location is not None and len(free_locations) >= num_needed:
+                return existing_location, free_locations[:num_needed]
+        
+        box_index += 1
+    
+    return existing_location, free_locations[:num_needed]
+
 def merge_pokemon_data(existing_slot, new_data):
     """
     Merge new Pokémon data into the existing slot data.
@@ -62,13 +122,6 @@ def merge_pokemon_data(existing_slot, new_data):
         clean_ability = clean_ability.capitalize()
         existing_slot['Ability'] = nbtlib.Compound({'AbilityName': nbtlib.String(clean_ability)})
     
-    # Merge moves
-    #if 'moves' in new_data:
-    #    move_set = nbtlib.List[nbtlib.Compound]()
-    #    for move in new_data['moves']:
-    #        move_set.append(nbtlib.Compound({'MoveName': nbtlib.String(move)}))
-    #    existing_slot['MoveSet'] = move_set
-
     # Merge IVs
     if 'ivs' in new_data:
         ivs = existing_slot.get('IVs', nbtlib.Compound())
@@ -87,8 +140,6 @@ def merge_pokemon_data(existing_slot, new_data):
     if 'nature' in new_data:
         clean_nature = new_data['nature'].replace('-', '').lower()
         existing_slot['Nature'] = nbtlib.String(f"cobblemon:{clean_nature}")
-    #if 'original_trainer' in new_data:
-    #    existing_slot['PokemonOriginalTrainer'] = nbtlib.String(new_data['original_trainer'])
     if 'health' in new_data:
         existing_slot['Health'] = nbtlib.Int(new_data['health'])
     if 'experience' in new_data:
@@ -114,8 +165,9 @@ def merge_pokemon_data(existing_slot, new_data):
         existing_slot['TeraType'] = nbtlib.String(tera_type_value)
     if 'form_id' in new_data:
         existing_slot['FormId'] = nbtlib.String(new_data['form_id'])
-    #if 'uuid' in new_data:
-    #    existing_slot['UUID'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(u) for u in new_data['uuid']])
+    if 'uuid' in new_data:
+        new_uuid = generate_uuid()
+        existing_slot['UUID'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(u) for u in new_uuid])
     if 'scale_modifier' in new_data:
         existing_slot['ScaleModifier'] = nbtlib.Float(new_data['scale_modifier'])
     if 'nickname' in new_data:
@@ -187,8 +239,8 @@ def save_nbt_to_dat(nbt_data, file_path):
         print(f"Error saving NBT file: {e}")
 
 def main():
-    json_files, slot = select_json_files()
-    if not json_files or slot is None:
+    json_files = select_json_files()
+    if not json_files:
         return
 
     dat_file = select_dat_file()
@@ -202,22 +254,106 @@ def main():
         print(f"Error loading NBT file: {e}")
         return
 
-    for json_file in json_files:
-        pokemon_info = load_json(json_file)
-        if pokemon_info:
-            # Load the existing slot data
-            slot_key = f'Slot{slot}'
-            existing_slot = nbt_data.get(slot_key, nbtlib.Compound())
-            # Merge the new data into the existing slot data
-            nbt_data[slot_key] = merge_pokemon_data(existing_slot, pokemon_info)
-            print(f"Merged Pokémon data into {slot_key} from {json_file}")
-        else:
-            print(f"Skipping invalid JSON file: {json_file}")
+    # Detect the type of .dat file
+    dat_type = detect_dat_type(nbt_data)
+    print(f"Detected .dat type: {dat_type}")
 
-    if nbt_data:
-        save_nbt_to_dat(nbt_data, dat_file)
+    if dat_type == 'party':
+        # Handle party data
+        existing_slot_index, free_slot_indices = find_existing_pokemon_and_free_slots_party(nbt_data, len(json_files))
+        
+        if existing_slot_index is None:
+            print("No existing Pokémon found to duplicate in party.")
+            return
+        
+        if len(free_slot_indices) < len(json_files):
+            print(f"Only {len(free_slot_indices)} free slots available in party, but {len(json_files)} JSON files were selected.")
+            return
+        
+        print(f"Found existing Pokémon in party slot {existing_slot_index}")
+        print(f"Will duplicate to {len(free_slot_indices)} free slots: {free_slot_indices}")
+
+        # Get the existing slot data
+        existing_slot_key = f'Slot{existing_slot_index}'
+        existing_slot_data = nbt_data[existing_slot_key]
+
+        # Process each JSON file to a separate slot
+        for idx, json_file in enumerate(json_files):
+            free_slot_index = free_slot_indices[idx]
+            free_slot_key = f'Slot{free_slot_index}'
+            
+            # Deep copy the existing slot data
+            duplicated_data = copy.deepcopy(existing_slot_data)
+            
+            # Generate a new UUID for the duplicated Pokémon
+            new_uuid = generate_uuid()
+            duplicated_data['UUID'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(u) for u in new_uuid])
+            
+            # Load and merge the JSON data
+            pokemon_info = load_json(json_file)
+            if pokemon_info:
+                # Merge the new data into the duplicated slot
+                duplicated_data = merge_pokemon_data(duplicated_data, pokemon_info)
+                nbt_data[free_slot_key] = duplicated_data
+                print(f"Processed Pokémon from {os.path.basename(json_file)} into party slot {free_slot_index}")
+            else:
+                print(f"Skipping invalid JSON file: {json_file}")
+
+    elif dat_type == 'boxes':
+        # Handle box data
+        existing_location, free_locations = find_existing_pokemon_and_free_slots_boxes(nbt_data, len(json_files))
+        
+        if existing_location is None:
+            print("No existing Pokémon found to duplicate in boxes.")
+            return
+        
+        if len(free_locations) < len(json_files):
+            print(f"Only {len(free_locations)} free slots available in boxes, but {len(json_files)} JSON files were selected.")
+            return
+        
+        existing_box, existing_slot = existing_location
+        print(f"Found existing Pokémon in box {existing_box}, slot {existing_slot}")
+        print(f"Will duplicate to {len(free_locations)} free locations")
+
+        # Get the existing slot data
+        existing_box_key = f'Box{existing_box}'
+        existing_slot_key = f'Slot{existing_slot}'
+        existing_slot_data = nbt_data[existing_box_key][existing_slot_key]
+
+        # Process each JSON file to a separate slot
+        for idx, json_file in enumerate(json_files):
+            free_box, free_slot = free_locations[idx]
+            free_box_key = f'Box{free_box}'
+            free_slot_key = f'Slot{free_slot}'
+            
+            # Ensure the box exists
+            if free_box_key not in nbt_data:
+                nbt_data[free_box_key] = nbtlib.Compound()
+            
+            # Deep copy the existing slot data
+            duplicated_data = copy.deepcopy(existing_slot_data)
+            
+            # Generate a new UUID for the duplicated Pokémon
+            new_uuid = generate_uuid()
+            duplicated_data['UUID'] = nbtlib.List[nbtlib.Int]([nbtlib.Int(u) for u in new_uuid])
+            
+            # Load and merge the JSON data
+            pokemon_info = load_json(json_file)
+            if pokemon_info:
+                # Merge the new data into the duplicated slot
+                duplicated_data = merge_pokemon_data(duplicated_data, pokemon_info)
+                nbt_data[free_box_key][free_slot_key] = duplicated_data
+                print(f"Processed Pokémon from {os.path.basename(json_file)} into box {free_box}, slot {free_slot}")
+            else:
+                print(f"Skipping invalid JSON file: {json_file}")
+
     else:
-        print("No valid Pokémon data to save.")
+        print("Unknown .dat file format. Cannot process.")
+        return
+
+    # Save the modified NBT data
+    save_nbt_to_dat(nbt_data, dat_file)
+    print(f"Successfully processed {len(json_files)} Pokémon")
 
 if __name__ == "__main__":
     main()

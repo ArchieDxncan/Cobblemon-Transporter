@@ -91,7 +91,7 @@ class PokemonHomeApp:
         # Configure the notebook style
         self.style.configure('TNotebook', background=COLORS["background"], borderwidth=0)
         self.style.configure('TNotebook.Tab', background=COLORS["secondary"], foreground=COLORS["text"],
-                             padding=[10, 5], font=('Arial', 9, 'bold'))
+                             padding=[10, 5], font=('Roboto', 9, 'bold'))
         self.style.map('TNotebook.Tab', background=[('selected', COLORS["primary"])],
                        foreground=[('selected', 'white')])
         
@@ -99,22 +99,26 @@ class PokemonHomeApp:
         self.style.configure('TFrame', background=COLORS["background"])
         
         # Configure the label style
-        self.style.configure('TLabel', background=COLORS["background"], foreground=COLORS["text"], font=('Arial', 10))
-        self.style.configure('Header.TLabel', font=('Arial', 16, 'bold'), background=COLORS["background"])
-        self.style.configure('BoxTitle.TLabel', font=('Arial', 12, 'bold'), background=COLORS["background"])
+        self.style.configure('TLabel', background=COLORS["background"], foreground=COLORS["text"], font=('Roboto', 10))
+        self.style.configure('Header.TLabel', font=('Roboto', 16, 'bold'), background=COLORS["background"])
+        self.style.configure('BoxTitle.TLabel', font=('Roboto', 12, 'bold'), background=COLORS["background"])
         
         # Configure the button style
-        self.style.configure('TButton', background=COLORS["primary"], foreground='white', font=('Arial', 10, 'bold'),
+        self.style.configure('TButton', background=COLORS["primary"], foreground='white', font=('Roboto', 10, 'bold'),
                             padding=5, borderwidth=0)
         self.style.map('TButton', background=[('active', COLORS["button_hover"])])
         
         # Configure navigation button style
         self.style.configure('Nav.TButton', background=COLORS["secondary"], foreground=COLORS["text"], 
-                            padding=5, width=3, font=('Arial', 10, 'bold'))
+                            padding=5, width=3, font=('Roboto', 10, 'bold'))
         
         # Configure convert button style
         self.style.configure('Convert.TButton', background=COLORS["accent"], foreground=COLORS["text"],
-                            padding=8, font=('Arial', 10, 'bold'))
+                            padding=8, font=('Roboto', 10, 'bold'))
+        
+        # Configure showdown button style
+        self.style.configure('Showdown.TButton', background="#4C6EF5", foreground="white",
+                            padding=8, font=('Roboto', 10, 'bold'))
 
     def create_header(self):
         """Create a header with logo and title."""
@@ -126,7 +130,7 @@ class PokemonHomeApp:
             logo_path = "logo.png"  # Create a logo.png file and place it in your project directory
             if os.path.exists(logo_path):
                 logo_img = Image.open(logo_path)
-                logo_img = logo_img.resize((50, 50), Image.Resampling.LANCZOS)
+                logo_img = logo_img.resize((50, 50), Image.Resampling.NEAREST)
                 logo_photo = ImageTk.PhotoImage(logo_img)
                 logo_label = tk.Label(header_frame, image=logo_photo, bg=COLORS["background"])
                 logo_label.image = logo_photo  # Keep a reference
@@ -156,14 +160,14 @@ class PokemonHomeApp:
         file_paths = [path.strip("{}") for path in file_paths]
 
         # Supported file extensions
-        supported_extensions = {'.pk9', '.cb9', '.pb8'}
+        supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8'}
 
         for file_path in file_paths:
             if any(file_path.lower().endswith(ext) for ext in supported_extensions):
                 self.convert_file_to_json(file_path)
                 self.update_status(f"Imported: {os.path.basename(file_path)}")
             else:
-                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8).")
+                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8, .pk8).")
                 self.update_status("Import failed: Unsupported file type")
 
     def convert_pk9_to_json(self, file_path):
@@ -263,7 +267,7 @@ class PokemonHomeApp:
         
         # Box label with better styling
         self.local_box_label = tk.Label(box_title_frame, text="Box 1", bg=COLORS["primary"], 
-                                      fg="white", font=("Arial", 11, "bold"), padx=15, pady=2)
+                                      fg="white", font=("Roboto", 11, "bold"), padx=15, pady=2)
         self.local_box_label.pack(fill=tk.X, expand=True)
         
         # Right navigation button
@@ -290,7 +294,7 @@ class PokemonHomeApp:
                 # Check for form_id and append the appropriate suffix
                 species_name = pokemon['species'].lower()
                 if 'form_id' in pokemon:
-                    if pokemon['form_id'].lower() in ['galar', 'alola', 'hisui']:
+                    if pokemon['form_id'].lower() in ['galar', 'alola', 'hisui', 'dusk', 'midnight', 'dawn']:
                         species_name += f"-{pokemon['form_id'].lower()}"
             
                 sprite_path = os.path.join(sprite_folder, f"{species_name}.png")
@@ -311,7 +315,7 @@ class PokemonHomeApp:
                     # Capitalize the species name for display
                     display_name = pokemon['species'].capitalize()
                     button.config(bg=COLORS["filled_slot"], text=display_name,
-                                font=("Arial", 8, "bold"), fg=COLORS["text"])
+                                font=("Roboto", 8, "bold"), fg=COLORS["text"])
             else:
                 # Reset the button completely, including dimensions
                 button.config(image="", text="", compound=tk.NONE,
@@ -348,12 +352,17 @@ class PokemonHomeApp:
         
         # Add a default message when no Pokémon is selected
         self.default_message = ttk.Label(self.overview_tab, text="Select a Pokémon to view details", 
-                                      font=("Arial", 11), foreground="#888888")
+                                      font=("Roboto", 11), foreground="#888888")
         self.default_message.pack(pady=50)
 
         # Add buttons frame at the bottom
         buttons_frame = tk.Frame(inner_details, bg=COLORS["background"], pady=10)
         buttons_frame.pack(fill=tk.X)
+
+        # "Export to Showdown" button with blue styling
+        self.showdown_button = ttk.Button(buttons_frame, text="Export to Showdown", style="Showdown.TButton",
+                                      command=self.export_to_showdown)
+        self.showdown_button.pack(side=tk.LEFT)
         
         # "Convert to .cb9" button with improved styling
         self.convert_button = ttk.Button(buttons_frame, text="Convert to .cb9", style="Convert.TButton", 
@@ -366,13 +375,166 @@ class PokemonHomeApp:
         self.status_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
         self.status_label = tk.Label(self.status_frame, text="Ready", bg=COLORS["primary"], 
-                                   fg="white", font=("Arial", 9), anchor=tk.W, padx=10)
+                                   fg="white", font=("Roboto", 9), anchor=tk.W, padx=10)
         self.status_label.pack(side=tk.LEFT, fill=tk.X)
 
     def update_status(self, message):
         """Update the status bar with a message."""
         self.status_label.config(text=message)
         self.root.update_idletasks()  # Force update
+
+    def export_to_showdown(self):
+        """Export the selected Pokémon's data to Pokémon Showdown format."""
+        if self.selected_pokemon is None:
+            messagebox.showerror("Error", "No Pokémon selected!")
+            self.update_status("Error: No Pokémon selected")
+            return
+        
+        # Convert Pokémon data to Showdown format
+        showdown_data = self.convert_to_showdown_format(self.selected_pokemon)
+        
+        # Create a popup window to display the showdown format
+        showdown_window = tk.Toplevel(self.root)
+        showdown_window.title("Export to Showdown")
+        showdown_window.geometry("500x400")
+        showdown_window.configure(bg=COLORS["background"])
+        showdown_window.transient(self.root)  # Set to be on top of the main window
+        showdown_window.grab_set()  # Modal
+        
+        # Center the window
+        showdown_window.update_idletasks()
+        width = showdown_window.winfo_width()
+        height = showdown_window.winfo_height()
+        x = (showdown_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (showdown_window.winfo_screenheight() // 2) - (height // 2)
+        showdown_window.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+        
+        # Create content frame with padding
+        content_frame = tk.Frame(showdown_window, bg=COLORS["background"], padx=20, pady=20)
+        content_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Title
+        title_text = f"Showdown Format: {self.selected_pokemon['species'].capitalize()}"
+        title_label = tk.Label(content_frame, text=title_text, font=("Roboto", 14, "bold"),
+                            bg=COLORS["background"], fg=COLORS["text"])
+        title_label.pack(pady=(0, 15))
+        
+        # Text area for showdown format with syntax highlighting styling
+        text_frame = tk.Frame(content_frame, bg=COLORS["secondary"], padx=2, pady=2, bd=1, relief=tk.SOLID)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        text_area = tk.Text(text_frame, wrap=tk.WORD, bg="#F8F8F8", fg="#333333",
+                          padx=10, pady=10, font=("Consolas", 11))
+        text_area.pack(fill=tk.BOTH, expand=True)
+        text_area.insert(tk.END, showdown_data)
+        text_area.config(state=tk.DISABLED)  # Make read-only
+        
+        # Buttons frame
+        button_frame = tk.Frame(content_frame, bg=COLORS["background"], pady=15)
+        button_frame.pack(fill=tk.X)
+        
+        # Copy to clipboard button
+        def copy_to_clipboard():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(showdown_data)
+            self.update_status(f"Copied {self.selected_pokemon['species'].capitalize()} Showdown format to clipboard")
+            
+        copy_button = ttk.Button(button_frame, text="Copy to Clipboard", 
+                               command=copy_to_clipboard, style="Showdown.TButton")
+        copy_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Close button
+        close_button = ttk.Button(button_frame, text="Close", command=showdown_window.destroy)
+        close_button.pack(side=tk.RIGHT)
+        
+        # Update status
+        self.update_status(f"Exported {self.selected_pokemon['species'].capitalize()} to Showdown format")
+
+    def convert_to_showdown_format(self, pokemon):
+        """Convert a Pokémon's data to Showdown format."""
+        output_lines = []
+        
+        # Add nickname and species
+        if pokemon.get("nickname") and pokemon.get("nickname").lower() != pokemon.get("species").lower():
+            output_lines.append(f"{pokemon['nickname']} ({pokemon['species'].capitalize()})")
+        else:
+            output_lines.append(f"{pokemon['species'].capitalize()}")
+        
+        # Add gender if available
+        if pokemon.get("gender"):
+            gender_symbol = "M" if pokemon["gender"] == "MALE" else "F" if pokemon["gender"] == "FEMALE" else ""
+            if gender_symbol:
+                output_lines[0] += f" ({gender_symbol})"
+        
+        # Add item if available (not in this JSON, but adding for completeness)
+        item = pokemon.get("held_item", "")
+        if item:
+            output_lines.append(f"@ {item}")
+        
+        # Add ability
+        ability = pokemon.get("ability", "").replace("-", " ").title()
+        output_lines.append(f"Ability: {ability}")
+        
+        # Add level
+        output_lines.append(f"Level: {pokemon.get('level', 100)}")
+        
+        # Add shiny status if shiny
+        if pokemon.get("shiny"):
+            output_lines.append("Shiny: Yes")
+        
+        # Add EVs if any are non-zero
+        evs = pokemon.get("evs", {})
+        ev_list = []
+        for stat, value in evs.items():
+            if value > 0:
+                # Convert snake_case to typical Pokemon stat names
+                stat_name = stat.replace("_", " ").replace("defence", "defense").title()
+                if stat_name == "Hp":
+                    stat_name = "HP"
+                elif stat_name == "Special Attack":
+                    stat_name = "SpA"
+                elif stat_name == "Special Defense":
+                    stat_name = "SpD"
+                elif stat_name == "Speed":
+                    stat_name = "Spe"
+                ev_list.append(f"{value} {stat_name}")
+        
+        if ev_list:
+            output_lines.append(f"EVs: {' / '.join(ev_list)}")
+        
+        # Add nature
+        if pokemon.get("nature"):
+            output_lines.append(f"{pokemon['nature']} Nature")
+        
+        # Add IVs if any are not perfect (31)
+        ivs = pokemon.get("ivs", {})
+        iv_list = []
+        for stat, value in ivs.items():
+            if value < 31:  # Only add if not perfect IV
+                # Convert snake_case to typical Pokemon stat names
+                stat_name = stat.replace("_", " ").replace("defence", "defense").title()
+                if stat_name == "Hp":
+                    stat_name = "HP"
+                elif stat_name == "Special Attack":
+                    stat_name = "SpA"
+                elif stat_name == "Special Defense":
+                    stat_name = "SpD"
+                elif stat_name == "Speed":
+                    stat_name = "Spe"
+                iv_list.append(f"{value} {stat_name}")
+        
+        if iv_list:
+            output_lines.append(f"IVs: {' / '.join(iv_list)}")
+        
+        # Add moves
+        moves = pokemon.get("moves", [])
+        for move in moves:
+            # Format move name (replace hyphens with spaces and capitalize each word)
+            formatted_move = " ".join(word.capitalize() for word in move.split("-"))
+            output_lines.append(f"- {formatted_move}")
+        
+        # Join all lines with newlines and return
+        return "\n".join(output_lines)
 
     def show_pokemon_info(self, event, grid_type, index):
         """Show the Pokémon's info in a tabbed interface."""
@@ -428,14 +590,14 @@ class PokemonHomeApp:
         # Try to load the sprite
         sprite_folder = SHINY_SPRITES_FOLDER if pokemon['shiny'] else SPRITES_FOLDER
         species_name = pokemon['species'].lower()
-        if 'form_id' in pokemon and pokemon['form_id'].lower() in ['galar', 'alola', 'hisui']:
+        if 'form_id' in pokemon and pokemon['form_id'].lower() in ['galar', 'alola', 'hisui', 'dusk', 'midnight', 'dawn']:
             species_name += f"-{pokemon['form_id'].lower()}"
         
         sprite_path = os.path.join(sprite_folder, f"{species_name}.png")
         
         if os.path.exists(sprite_path):
             sprite_img = Image.open(sprite_path)
-            sprite_img = sprite_img.resize((80, 80), Image.Resampling.LANCZOS)
+            sprite_img = sprite_img.resize((136, 112), Image.Resampling.NEAREST)
             sprite_photo = ImageTk.PhotoImage(sprite_img)
             sprite_label = tk.Label(header_frame, image=sprite_photo, bg=COLORS["background"])
             sprite_label.image = sprite_photo  # Keep a reference
@@ -448,21 +610,21 @@ class PokemonHomeApp:
         # Show species name in bold (capitalize first letter)
         formatted_species = pokemon['species'].capitalize()
         species_label = ttk.Label(name_frame, text=formatted_species, 
-                              font=("Arial", 14, "bold"), foreground=COLORS["text"])
+                              font=("Roboto", 14, "bold"), foreground=COLORS["text"])
         species_label.pack(anchor=tk.W)
         
         # Show nickname in quotes if it's different from species (capitalize first letter)
         formatted_nickname = pokemon['nickname'].capitalize()
         if formatted_nickname.lower() != formatted_species.lower():
-            nickname_label = ttk.Label(name_frame, text=f'"{formatted_nickname}"', 
-                                   font=("Arial", 12, "italic"), foreground="#666666")
+            nickname_label = ttk.Label(name_frame, text=f'"{pokemon['nickname']}"', 
+                                   font=("Roboto", 12, "italic"), foreground="#666666")
             nickname_label.pack(anchor=tk.W)
         
         # Shiny indicator if applicable
         if pokemon['shiny']:
             shiny_frame = tk.Frame(name_frame, bg=COLORS["accent"], bd=0, relief=tk.FLAT, padx=5, pady=2)
             shiny_frame.pack(anchor=tk.W, pady=(5, 0))
-            shiny_label = tk.Label(shiny_frame, text="✨ SHINY", font=("Arial", 8, "bold"), 
+            shiny_label = tk.Label(shiny_frame, text="✨ SHINY", font=("Roboto", 8, "bold"), 
                                  fg=COLORS["text"], bg=COLORS["accent"])
             shiny_label.pack()
         
@@ -475,10 +637,10 @@ class PokemonHomeApp:
         info_frame.pack(fill=tk.BOTH, expand=True, padx=15)
         
         # Row 1
-        ttk.Label(info_frame, text="Level:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Level:", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=5)
         ttk.Label(info_frame, text=str(pokemon['level'])).grid(row=0, column=1, sticky=tk.W, padx=(10, 30))
         
-        ttk.Label(info_frame, text="Gender:", font=("Arial", 10, "bold")).grid(row=0, column=2, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Gender:", font=("Roboto", 10, "bold")).grid(row=0, column=2, sticky=tk.W, pady=5)
         
         # Gender with icons instead of text
         gender_frame = tk.Frame(info_frame, bg=COLORS["background"])
@@ -495,26 +657,26 @@ class PokemonHomeApp:
             gender_icon = "⚪"
             gender_color = "#888888"  # Grey for genderless
             
-        gender_label = tk.Label(gender_frame, text=gender_icon, font=("Arial", 12, "bold"), 
+        gender_label = tk.Label(gender_frame, text=gender_icon, font=("Roboto", 12, "bold"), 
                              fg=gender_color, bg=COLORS["background"])
         gender_label.pack(side=tk.LEFT)
         
         # Row 2
-        ttk.Label(info_frame, text="Ability:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Ability:", font=("Roboto", 10, "bold")).grid(row=1, column=0, sticky=tk.W, pady=5)
         
         # Format ability name - capitalize each word
         ability_name = pokemon['ability']
         formatted_ability = " ".join(word.capitalize() for word in ability_name.split())
         ttk.Label(info_frame, text=formatted_ability).grid(row=1, column=1, sticky=tk.W, padx=(10, 30))
         
-        ttk.Label(info_frame, text="Nature:", font=("Arial", 10, "bold")).grid(row=1, column=2, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Nature:", font=("Roboto", 10, "bold")).grid(row=1, column=2, sticky=tk.W, pady=5)
         
         # Format nature name - capitalize
         nature_name = pokemon['nature'].capitalize()
         ttk.Label(info_frame, text=nature_name).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
         
         # Row 3
-        ttk.Label(info_frame, text="Caught in:", font=("Arial", 10, "bold")).grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Caught in:", font=("Roboto", 10, "bold")).grid(row=2, column=0, sticky=tk.W, pady=5)
         
         # Format ball name - remove "cobblemon:" prefix, replace underscores with spaces, capitalize each word
         ball_name = pokemon['caught_ball']
@@ -525,11 +687,11 @@ class PokemonHomeApp:
         
         ttk.Label(info_frame, text=formatted_ball).grid(row=2, column=1, sticky=tk.W, padx=(10, 30))
         
-        ttk.Label(info_frame, text="Trainer:", font=("Arial", 10, "bold")).grid(row=2, column=2, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Trainer:", font=("Roboto", 10, "bold")).grid(row=2, column=2, sticky=tk.W, pady=5)
         ttk.Label(info_frame, text=pokemon['original_trainer']).grid(row=2, column=3, sticky=tk.W, padx=(10, 0))
         
         # Row 4
-        ttk.Label(info_frame, text="Experience:", font=("Arial", 10, "bold")).grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Label(info_frame, text="Experience:", font=("Roboto", 10, "bold")).grid(row=3, column=0, sticky=tk.W, pady=5)
         ttk.Label(info_frame, text=str(pokemon['experience'])).grid(row=3, column=1, sticky=tk.W, padx=(10, 30), columnspan=3)
 
     def create_stats_tab(self, pokemon):
@@ -543,7 +705,7 @@ class PokemonHomeApp:
         iv_header_frame.pack(fill=tk.X, pady=(0, 10))
         
         tk.Label(iv_header_frame, text="Individual Values (IVs)", 
-               font=("Arial", 11, "bold"), bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
+               font=("Roboto", 11, "bold"), bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
         
         # IV bars with visual representation
         ivs_frame = ttk.Frame(main_frame)
@@ -566,7 +728,7 @@ class PokemonHomeApp:
         ev_header_frame.pack(fill=tk.X, pady=(0, 10))
         
         tk.Label(ev_header_frame, text="Effort Values (EVs)", 
-               font=("Arial", 11, "bold"), bg=COLORS["accent"], fg=COLORS["text"]).pack(anchor=tk.W)
+               font=("Roboto", 11, "bold"), bg=COLORS["accent"], fg=COLORS["text"]).pack(anchor=tk.W)
         
         # EV bars with visual representation
         evs_frame = ttk.Frame(main_frame)
@@ -589,7 +751,7 @@ class PokemonHomeApp:
         row = 0
         for stat_name, stat_value in stats.items():
             # Stat name
-            ttk.Label(parent, text=stat_name, font=("Arial", 10, "bold")).grid(row=row, column=0, sticky=tk.W, pady=3)
+            ttk.Label(parent, text=stat_name, font=("Roboto", 10, "bold")).grid(row=row, column=0, sticky=tk.W, pady=3)
             
             # Stat value
             ttk.Label(parent, text=str(stat_value)).grid(row=row, column=1, padx=10, sticky=tk.W, pady=3)
@@ -618,7 +780,7 @@ class PokemonHomeApp:
         header_frame = tk.Frame(main_frame, bg=COLORS["primary"], padx=10, pady=5)
         header_frame.pack(fill=tk.X, pady=(0, 15))
         
-        tk.Label(header_frame, text="Moves", font=("Arial", 11, "bold"), 
+        tk.Label(header_frame, text="Moves", font=("Roboto", 11, "bold"), 
                bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
         
         # Moves list with improved styling
@@ -626,8 +788,8 @@ class PokemonHomeApp:
         moves_frame.pack(fill=tk.BOTH, expand=True)
         
         # Create a table-like header
-        ttk.Label(moves_frame, text="Move Name", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
-        ttk.Label(moves_frame, text="Type", font=("Arial", 10, "bold")).grid(row=0, column=1, sticky=tk.W, pady=(0, 10), padx=20)
+        ttk.Label(moves_frame, text="Move Name", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
+        ttk.Label(moves_frame, text="Type", font=("Roboto", 10, "bold")).grid(row=0, column=1, sticky=tk.W, pady=(0, 10), padx=20)
         
         # Add separator under header
         separator = ttk.Separator(moves_frame, orient='horizontal')
@@ -644,30 +806,27 @@ class PokemonHomeApp:
             
             # Format move name - replace underscores with spaces and capitalize each word
             formatted_move = move.replace("_", " ")
-            formatted_move = " ".join(word.capitalize() for word in formatted_move.split())
+            formatted_move = " ".join(word.capitalize() for word in formatted_move.split("-"))
             
             # Move name
             ttk.Label(row_frame, text=formatted_move, background=bg_color).grid(row=0, column=0, sticky=tk.W, padx=5, pady=8)
 
     def convert_to_pb8(self):
-        """Convert the selected Pokémon's JSON file to .pb8 using the external .exe."""
+        """Convert the selected Pokémon's JSON file to .cb9 using the external .exe."""
         if self.selected_pokemon is None:
             messagebox.showerror("Error", "No Pokémon selected!")
             self.update_status("Error: No Pokémon selected")
             return
 
-        # Generate the unique filename based on the Pokémon's species, IVs, and EVs
-        name = self.selected_pokemon['species'].lower()
-        stats_string = str(self.selected_pokemon['ivs']) + str(self.selected_pokemon['evs'])
-        unique_number = int(hashlib.md5(stats_string.encode('utf-8')).hexdigest(), 16) % 10000
-        json_file_path = os.path.join(COBBLEMON_FOLDER, f"{name}_{unique_number}.json")
-
-        if not os.path.exists(json_file_path):
+        # Use the file_path directly from the selected_pokemon data
+        if 'file_path' not in self.selected_pokemon or not os.path.exists(self.selected_pokemon['file_path']):
             messagebox.showerror("Error", f"JSON file for {self.selected_pokemon['species']} not found!")
             self.update_status(f"Error: JSON file not found for {self.selected_pokemon['species']}")
             return
+        
+        json_file_path = self.selected_pokemon['file_path']
 
-        # Assuming the .exe is named "converter.exe" and is in the same directory as the script
+        # Assuming the .exe is named JsonToPB8.exe and is in JsonToPB8 directory
         converter_exe = "JsonToPB8/JsonToPB8.exe"
         if not os.path.exists(converter_exe):
             messagebox.showerror("Error", "Converter executable not found!")
@@ -682,7 +841,7 @@ class PokemonHomeApp:
             subprocess.run([converter_exe, json_file_path], check=True)
             
             # Show success message
-            messagebox.showinfo("Success", f"Conversion successful: {json_file_path}.cb9 created!")
+            messagebox.showinfo("Success", f"Conversion successful: {os.path.basename(json_file_path)}.cb9 created!")
             self.update_status(f"Successfully converted {self.selected_pokemon['species']} to .cb9")
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"Conversion failed: {e}")
@@ -936,7 +1095,7 @@ class PokemonHomeApp:
         
         # Title
         title_label = tk.Label(content_frame, text="Cobblemon Transporter - Instructions", 
-                            font=("Arial", 16, "bold"), bg=COLORS["background"], fg=COLORS["text"])
+                            font=("Roboto", 16, "bold"), bg=COLORS["background"], fg=COLORS["text"])
         title_label.pack(anchor=tk.W, pady=(0, 15))
         
         # Instructions sections
@@ -947,7 +1106,7 @@ class PokemonHomeApp:
             },
             {
                 "title": "Importing Pokémon",
-                "content": "There are several ways to import your Pokémon:\n\n• Drag & Drop: Simply drag .pk9, .cb9, or .pb8 files directly onto the application window.\n\n• Import Menu: Use File → Import .pk9 or File → Import .dat to import Pokémon from PK9 files or Cobblemon DAT files.\n\n• After importing, your Pokémon will appear in the storage boxes."
+                "content": "There are several ways to import your Pokémon:\n\n• Drag & Drop: Simply drag .pk9, .cb9, .pb8 or .pk8 files directly onto the application window.\n\n• Import Menu: Use File → Import .pk9 or File → Import .dat to import Pokémon from PK9 files or Cobblemon DAT files.\n\n• After importing, your Pokémon will appear in the storage boxes."
             },
             {
                 "title": "Managing Boxes",
@@ -959,7 +1118,7 @@ class PokemonHomeApp:
             },
             {
                 "title": "Converting Pokémon",
-                "content": "• Converting Individual Pokémon: Select a Pokémon and click the 'Convert to .cb9' button at the bottom of the details panel.\n\n• Mass Conversion: Use File → Export to Pokémon to convert multiple JSON files to .cb9 format at once.\n\n• Exporting to Cobblemon: Use File → Export to Cobblemon to prepare your Pokémon for use in Cobblemon."
+                "content": "• Converting Individual Pokémon: Select a Pokémon and click the 'Convert to .cb9' button at the bottom of the details panel.\n\n• Export to Showdown: Select a Pokémon and click the 'Export to Showdown' button to get the Pokémon's data in Showdown format for competitive battling.\n\n• Mass Conversion: Use File → Export to Pokémon to convert multiple JSON files to .cb9 format at once.\n\n• Exporting to Cobblemon: Use File → Export to Cobblemon to prepare your Pokémon for use in Cobblemon."
             },
             {
                 "title": "Tips & Shortcuts",
@@ -973,12 +1132,12 @@ class PokemonHomeApp:
             section_frame = tk.Frame(content_frame, bg=COLORS["primary"], padx=10, pady=5)
             section_frame.pack(fill=tk.X, anchor=tk.W, pady=(15, 5) if i > 0 else (0, 5))
             
-            section_label = tk.Label(section_frame, text=section["title"], font=("Arial", 12, "bold"), 
+            section_label = tk.Label(section_frame, text=section["title"], font=("Roboto", 12, "bold"), 
                                 bg=COLORS["primary"], fg="white")
             section_label.pack(anchor=tk.W)
             
             # Section content
-            content_label = tk.Label(content_frame, text=section["content"], font=("Arial", 10), 
+            content_label = tk.Label(content_frame, text=section["content"], font=("Roboto", 10), 
                                 bg=COLORS["background"], fg=COLORS["text"], 
                                 justify=tk.LEFT, wraplength=580)
             content_label.pack(anchor=tk.W, padx=5)
@@ -1033,16 +1192,16 @@ class PokemonHomeApp:
         content_frame.pack(fill=tk.BOTH, expand=True)
         
         # App title
-        tk.Label(content_frame, text="Cobblemon Transporter", font=("Arial", 16, "bold"),
+        tk.Label(content_frame, text="Cobblemon Transporter", font=("Roboto", 16, "bold"),
                bg=COLORS["background"], fg=COLORS["text"]).pack(pady=(0, 10))
         
         # Version info
-        tk.Label(content_frame, text="by ArchieDxncan", font=("Arial", 10),
+        tk.Label(content_frame, text="by ArchieDxncan", font=("Roboto", 10),
                bg=COLORS["background"], fg=COLORS["text"]).pack(pady=(0, 20))
         
         # Description
         description = "A tool for managing and converting Pokémon between Cobblemon and other Pokémon games."
-        tk.Label(content_frame, text=description, font=("Arial", 9), wraplength=350,
+        tk.Label(content_frame, text=description, font=("Roboto", 9), wraplength=350,
                bg=COLORS["background"], fg=COLORS["text"]).pack(pady=(0, 20))
         
         # Close button
