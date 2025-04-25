@@ -160,15 +160,34 @@ class PokemonHomeApp:
         file_paths = [path.strip("{}") for path in file_paths]
 
         # Supported file extensions
-        supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8'}
+        supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8', '.dat'}
 
+        # Then in the same method, add a condition to handle .dat files differently
         for file_path in file_paths:
-            if any(file_path.lower().endswith(ext) for ext in supported_extensions):
+            if file_path.lower().endswith('.dat'):
+                self.process_dat_file(file_path)
+                self.update_status(f"Processed: {os.path.basename(file_path)}")
+            elif any(file_path.lower().endswith(ext) for ext in supported_extensions):
                 self.convert_file_to_json(file_path)
                 self.update_status(f"Imported: {os.path.basename(file_path)}")
             else:
-                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8, .pk8).")
+                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8, .pk8, .dat).")
                 self.update_status("Import failed: Unsupported file type")
+
+
+    def process_dat_file(self, file_path):
+        """Run parser.py on a dropped .dat file."""
+        try:
+            self.update_status(f"Processing DAT file: {os.path.basename(file_path)}")
+            # Run parser.py with the DAT file path as an argument
+            subprocess.run(["python", "parser.py", "--cli", "--files", file_path], check=True)
+            
+            # Reload the Pokémon data to display the newly converted Pokémon
+            self.load_pokemon_data()
+            self.update_status(f"Successfully processed {os.path.basename(file_path)}")
+        except subprocess.CalledProcessError as e:
+            messagebox.showerror("Error", f"Failed to process DAT file: {e}")
+            self.update_status(f"Error: Failed to process DAT file: {str(e)}")
 
     def convert_pk9_to_json(self, file_path):
         """Convert a .pk9 file to JSON using the PB8ToJson.py script."""
