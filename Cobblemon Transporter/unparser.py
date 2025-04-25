@@ -136,6 +136,50 @@ def merge_pokemon_data(existing_slot, new_data):
             evs[f'cobblemon:{stat}'] = nbtlib.Int(value)
         existing_slot['EVs'] = evs
 
+    # Handle moves
+    if 'moves' in new_data:
+        # First, check if an existing MoveSet is present to understand its structure
+        if 'MoveSet' in existing_slot:
+            #print(f"DEBUG: Found existing MoveSet structure: {type(existing_slot['MoveSet'])}")
+            
+            # Create an empty MoveSet with the same structure as the existing one
+            move_list = type(existing_slot['MoveSet'])()
+            
+            # Clear the existing moves (since we're creating a new Pokémon)
+            while len(move_list) > 0:
+                move_list.pop()
+        else:
+            # No existing MoveSet, create a basic list
+            move_list = nbtlib.List()
+            #print(f"DEBUG: Created new MoveSet list: {type(move_list)}")
+        
+        # Add moves from the JSON
+        for move_name in new_data['moves']:
+            if move_name and isinstance(move_name, str):
+                clean_move_name = move_name.replace('-', '').lower()
+                
+                # Create a move entry based on the structure we saw in screenshots
+                # Use a Python dictionary first, then convert to nbtlib Compound
+                move_dict = {
+                    'RaisedPPStages': nbtlib.Int(0),
+                    'MoveName': nbtlib.String(clean_move_name),
+                    'MovePP': nbtlib.Int(5)  # Default PP value of 5
+                }
+                
+                try:
+                    # Try to append the move to the list
+                    move_list.append(nbtlib.Compound(move_dict))
+                    print(f"Successfully added move {clean_move_name}")
+                except Exception as e:
+                    print(f"Error adding move: {e}")
+                    # Try fallback approach - add directly without wrapping in Compound
+                    try:
+                        move_list.append(move_dict)
+                    except Exception as e2:
+                        print(f"Fallback also failed: {e2}")
+        
+        existing_slot['MoveSet'] = move_list
+
     # Merge other fields if they exist
     if 'nature' in new_data:
         clean_nature = new_data['nature'].replace('-', '').lower()
