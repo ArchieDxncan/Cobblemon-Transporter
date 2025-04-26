@@ -59,8 +59,8 @@ Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKH
 ---
 
 ### Usage
-Cobblemon save files are stored in your world folder at pokemon/playerpartystore and pokemon/pcstore under your Minecraft UUID
-There is a help section on the toolbar. Either post an issue or message me on Discord @miniduncan if you need help!
+##Cobblemon save files are stored in your world folder at pokemon/playerpartystore and pokemon/pcstore under your Minecraft UUID.
+##There is a help section on the toolbar. Either post an issue or message me on Discord @miniduncan if you need help!
 1. Launch the tool by running start.bat
 3. Use the file dropdown to import from either Pokémon or Cobblemon.
 4. Import .nbt files for Cobblemon or .pk8/.pk9 files for Pokémon.
