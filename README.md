@@ -53,7 +53,7 @@ Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKH
 
 ### Installation
 1. [Download the latest release](https://github.com/ArchieDxncan/cobblemon-transporter/releases/) or download most recent from source.
-2. Ensure you have Python installed on your system.
+2. Ensure you have Python installed on your system. (Downloading from Windows Store automatically adds to PATH)
 3. Run dependencies.bat to install the required dependencies.
 
 ---
