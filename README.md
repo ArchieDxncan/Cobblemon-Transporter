@@ -80,7 +80,7 @@ Cobblemon -> Pokémon will be exported as .cb9 (equivalent to .pk9) you can enab
 
 ## Diagram
 
-![Cobblemon Transporter Diagram](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/transporter.png)
+![Cobblemon Transporter Diagram](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobblemontransporterdiagram.png)
 
 ---
 
