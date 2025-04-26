@@ -69,6 +69,8 @@ Cobblemon save files are stored in your world folder at pokemon/playerpartystore
 
 Cobblemon -> Pokémon will be exported as .cb9 (equivalent to .pk9) you can enable AllowIncompatibleConversion in PKHeX settings to transfer to pre Gen 9.
 
+If you're transferring from (Pokémon -> Cobblemon -> Pokémon), Some data such as Abilities and Movesets will have to be manually tuned to match the original Pokémon to be considered 100% legal.
+
 ---
 
 ## Diagram
