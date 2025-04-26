@@ -60,11 +60,12 @@ Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKH
 
 ### Usage
 Cobblemon save files are stored in your world folder at pokemon/playerpartystore and pokemon/pcstore under your Minecraft UUID
+(There is a help section on the toolbar. Either post an issue or message me on Discord @miniduncan if you need help!)
 1. Launch the tool by running start.bat
-2. Use the file dropdown to import from either Pokémon or Cobblemon.
-3. Import .nbt files for Cobblemon or .pk8/.pk9 files for Pokémon.
-4. The selected Pokémon will be imported into the Cobblemon folder as .json files. (Errors may occur as I haven't tested every single move/ability)
-5. Export Pokémon to Cobblemon. Note: Ensure you have a Pokemon in the .dat you are exporting to.
+3. Use the file dropdown to import from either Pokémon or Cobblemon.
+4. Import .nbt files for Cobblemon or .pk8/.pk9 files for Pokémon.
+5. The selected Pokémon will be imported into the Cobblemon folder as .json files. (Errors may occur as I haven't tested every single move/ability)
+6. Export Pokémon to Cobblemon. Note: Ensure you have a Pokemon in the .dat you are exporting to.
 5. Export Cobblemon to Pokémon. Note: You can use PKHeX to either import into your save file, then legalise the Pokémon using [ALM](https://github.com/architdate/PKHeX-Plugins)
 
 Cobblemon -> Pokémon will be exported as .cb9 (equivalent to .pk9) you can enable AllowIncompatibleConversion in PKHeX settings to transfer to pre Gen 9.
