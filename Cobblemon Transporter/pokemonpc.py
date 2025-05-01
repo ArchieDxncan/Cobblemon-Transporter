@@ -411,10 +411,12 @@ class PokemonHomeApp:
         self.overview_tab = ttk.Frame(self.notebook)
         self.stats_tab = ttk.Frame(self.notebook)
         self.moves_tab = ttk.Frame(self.notebook)
+        self.origin_tab = ttk.Frame(self.notebook)
 
         self.notebook.add(self.overview_tab, text="Overview")
         self.notebook.add(self.stats_tab, text="Stats")
         self.notebook.add(self.moves_tab, text="Moves")
+        self.notebook.add(self.origin_tab, text="Origin")
         
         # Create a scrollable frame for overview
         canvas = tk.Canvas(self.overview_tab, bg=COLORS["background"], highlightthickness=0)
@@ -638,6 +640,8 @@ class PokemonHomeApp:
                 widget.destroy()
             for widget in self.moves_tab.winfo_children():
                 widget.destroy()
+            for widget in self.origin_tab.winfo_children():
+                widget.destroy()
 
             # Overview Tab
             self.create_overview_tab(pokemon)
@@ -647,6 +651,9 @@ class PokemonHomeApp:
 
             # Moves Tab
             self.create_moves_tab(pokemon)
+            
+            # Origin Tab
+            self.create_origin_tab(pokemon)
             
             # Show the buttons
             self.showdown_button.pack(side=tk.LEFT, padx=5)
@@ -664,6 +671,8 @@ class PokemonHomeApp:
             for widget in self.stats_tab.winfo_children():
                 widget.destroy()
             for widget in self.moves_tab.winfo_children():
+                widget.destroy()
+            for widget in self.origin_tab.winfo_children():
                 widget.destroy()
             
             # Create a scrollable frame for overview
@@ -715,9 +724,13 @@ class PokemonHomeApp:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         
-        # Create a header with name and sprite
-        header_frame = ttk.Frame(scrollable_frame)
-        header_frame.pack(fill=tk.X, pady=10, padx=10)
+        # Main container with padding
+        main_frame = ttk.Frame(scrollable_frame, padding=15)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Header section with sprite and name
+        header_frame = ttk.Frame(main_frame)
+        header_frame.pack(fill=tk.X, pady=(0, 15))
         
         # Try to load the sprite
         sprite_folder = SHINY_SPRITES_FOLDER if pokemon['shiny'] else SPRITES_FOLDER
@@ -729,56 +742,104 @@ class PokemonHomeApp:
         
         if os.path.exists(sprite_path):
             sprite_img = Image.open(sprite_path)
-            sprite_img = sprite_img.resize((136, 112), Image.Resampling.NEAREST)
+            sprite_img = sprite_img.resize((136, 112), Image.Resampling.NEAREST)  # Reverted to original size
             sprite_photo = ImageTk.PhotoImage(sprite_img)
             sprite_label = tk.Label(header_frame, image=sprite_photo, bg=COLORS["background"])
             sprite_label.image = sprite_photo  # Keep a reference
             sprite_label.pack(side=tk.LEFT, padx=(0, 15))
         
-        # Name and nickname
+        # Name and species info
         name_frame = ttk.Frame(header_frame)
         name_frame.pack(side=tk.LEFT, fill=tk.Y, pady=5)
         
         # Show species name in bold (capitalize first letter)
         formatted_species = pokemon['species'].capitalize()
         species_label = ttk.Label(name_frame, text=formatted_species, 
-                              font=("Roboto", 14, "bold"), foreground=COLORS["text"])
+                              font=("Roboto", 16, "bold"), foreground=COLORS["text"])
         species_label.pack(anchor=tk.W)
         
-        # Show nickname in quotes if it's different from species (capitalize first letter)
-        formatted_nickname = pokemon['nickname'].capitalize()
-        if formatted_nickname.lower() != formatted_species.lower():
-            nickname_label = ttk.Label(name_frame, text=f"\"{pokemon['nickname']}\"", 
-                           font=("Roboto", 12, "italic"), foreground="#666666")
+        # Show nickname in quotes if it's different from species (preserve original capitalization)
+        nickname = pokemon.get('nickname', '')
+        if nickname and nickname.lower() != pokemon['species'].lower():
+            # Show the nickname in quotes on the same line as species
+            nickname_label = ttk.Label(name_frame, text=f'{nickname}', 
+                           font=("Roboto", 12), foreground="#666666")
             nickname_label.pack(anchor=tk.W)
         
-        # Shiny indicator if applicable
+        # Level display in a box - now on the left under nickname
+        level_box = tk.Frame(name_frame, bg="#6F8BAA", 
+                          padx=6, pady=2, bd=0, relief=tk.FLAT)
+        level_box.pack(anchor=tk.W, pady=(5, 0))
+        
+        tk.Label(level_box, text=f"Lv.{pokemon['level']}", 
+               font=("Roboto", 10, "bold"), bg="#6F8BAA", 
+               fg="white").pack()
+        
+        # Shiny indicator in a box if applicable - after level
         if pokemon['shiny']:
-            shiny_frame = tk.Frame(name_frame, bg=COLORS["accent"], bd=0, relief=tk.FLAT, padx=5, pady=2)
-            shiny_frame.pack(anchor=tk.W, pady=(5, 0))
-            shiny_label = tk.Label(shiny_frame, text="✨ SHINY", font=("Roboto", 8, "bold"), 
-                                 fg=COLORS["text"], bg=COLORS["accent"])
-            shiny_label.pack()
+            shiny_box = tk.Frame(name_frame, bg=COLORS["accent"], 
+                              padx=8, pady=3, bd=1, relief=tk.RAISED)
+            shiny_box.pack(anchor=tk.W, pady=(5, 0))
+            
+            tk.Label(shiny_box, text="✨ SHINY", font=("Roboto", 9, "bold"), 
+                   fg=COLORS["text"], bg=COLORS["accent"]).pack()
         
-        # Separator
-        separator = ttk.Separator(scrollable_frame, orient='horizontal')
-        separator.pack(fill=tk.X, pady=10, padx=10)
+        # Information bars - one for each attribute
+        info_container = tk.Frame(main_frame, bg=COLORS["background"])
+        info_container.pack(fill=tk.X, expand=True, pady=(10, 0))
         
-        # Create info grid for better layout
-        info_frame = ttk.Frame(scrollable_frame)
-        info_frame.pack(fill=tk.BOTH, expand=True, padx=15)
+        # Individual bars for each attribute
+        gender_text = self.format_gender_text(pokemon['gender'])
+        self.create_info_bar(info_container, [("Gender", gender_text)])
+        self.create_info_bar(info_container, [("Nature", pokemon['nature'].capitalize())])
+        self.create_info_bar(info_container, [("Ability", self.format_ability(pokemon['ability']))])
+        self.create_info_bar(info_container, [("Trainer", pokemon['original_trainer'])])
+        self.create_info_bar(info_container, [("Experience", f"{pokemon['experience']:,}")])
+        self.create_info_bar(info_container, [("Caught In", self.format_ball_name(pokemon['caught_ball']))])
+    
+    def create_info_bar(self, parent, items):
+        """Create a horizontal info bar with multiple items."""
+        # Create a bar with subtle styling
+        bar = tk.Frame(parent, bg=COLORS["secondary"], bd=0, relief=tk.FLAT)
+        bar.pack(fill=tk.X, pady=5)
         
-        # Row 1
-        ttk.Label(info_frame, text="Level:", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Label(info_frame, text=str(pokemon['level'])).grid(row=0, column=1, sticky=tk.W, padx=(10, 30))
+        # Inner frame with padding
+        inner_frame = tk.Frame(bar, bg=COLORS["secondary"], padx=12, pady=8)
+        inner_frame.pack(fill=tk.X)
         
-        ttk.Label(info_frame, text="Gender:", font=("Roboto", 10, "bold")).grid(row=0, column=2, sticky=tk.W, pady=5)
+        # Divide space evenly among items
+        for i, (label, value) in enumerate(items):
+            item_frame = tk.Frame(inner_frame, bg=COLORS["secondary"])
+            item_frame.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0 if i == 0 else 15, 0))
+            
+            # Label
+            tk.Label(item_frame, text=f"{label}:", font=("Roboto", 10, "bold"),
+                   bg=COLORS["secondary"], fg=COLORS["text"]).pack(side=tk.LEFT)
+            
+            # Value - check if it's a tuple (for preformatted values with custom widgets)
+            if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], tk.Widget):
+                value[0].configure(bg=COLORS["secondary"])
+                value[0].pack(side=tk.LEFT, padx=(8, 0))
+            else:
+                # Regular text value
+                tk.Label(item_frame, text=value, font=("Roboto", 10),
+                      bg=COLORS["secondary"], fg=COLORS["text"]).pack(side=tk.LEFT, padx=(8, 0))
+    
+    def format_gender_text(self, gender):
+        """Format gender as text with proper capitalization."""
+        gender = gender.upper()
+        if gender == "MALE":
+            return "Male"
+        elif gender == "FEMALE":
+            return "Female"
+        else:  # GENDERLESS
+            return "Genderless"
+
+    def format_gender(self, gender):
+        """Format gender with appropriate icon and color."""
+        gender_frame = tk.Frame()
         
-        # Gender with icons instead of text
-        gender_frame = tk.Frame(info_frame, bg=COLORS["background"])
-        gender_frame.grid(row=0, column=3, sticky=tk.W, padx=(10, 0), pady=5)
-        
-        gender = pokemon['gender'].upper()
+        gender = gender.upper()
         if gender == "MALE":
             gender_icon = "♂"
             gender_color = "#3A7FD5"  # Blue for male
@@ -790,41 +851,25 @@ class PokemonHomeApp:
             gender_color = "#888888"  # Grey for genderless
             
         gender_label = tk.Label(gender_frame, text=gender_icon, font=("Roboto", 12, "bold"), 
-                             fg=gender_color, bg=COLORS["background"])
+                             fg=gender_color)
         gender_label.pack(side=tk.LEFT)
         
-        # Row 2
-        ttk.Label(info_frame, text="Ability:", font=("Roboto", 10, "bold")).grid(row=1, column=0, sticky=tk.W, pady=5)
+        # Add the gender text
+        gender_text = tk.Label(gender_frame, text=f" {gender.capitalize()}", font=("Roboto", 10))
+        gender_text.pack(side=tk.LEFT)
         
-        # Format ability name - capitalize each word
-        ability_name = pokemon['ability']
-        formatted_ability = " ".join(word.capitalize() for word in ability_name.split())
-        ttk.Label(info_frame, text=formatted_ability).grid(row=1, column=1, sticky=tk.W, padx=(10, 30))
-        
-        ttk.Label(info_frame, text="Nature:", font=("Roboto", 10, "bold")).grid(row=1, column=2, sticky=tk.W, pady=5)
-        
-        # Format nature name - capitalize
-        nature_name = pokemon['nature'].capitalize()
-        ttk.Label(info_frame, text=nature_name).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
-        
-        # Row 3
-        ttk.Label(info_frame, text="Caught in:", font=("Roboto", 10, "bold")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        
-        # Format ball name - remove "cobblemon:" prefix, replace underscores with spaces, capitalize each word
-        ball_name = pokemon['caught_ball']
+        return (gender_frame, None)
+
+    def format_ability(self, ability_name):
+        """Format ability name - capitalize each word."""
+        return " ".join(word.capitalize() for word in ability_name.split())
+
+    def format_ball_name(self, ball_name):
+        """Format ball name - remove 'cobblemon:' prefix, replace underscores with spaces, capitalize each word."""
         if "cobblemon:" in ball_name.lower():
             ball_name = ball_name[ball_name.lower().index("cobblemon:") + 10:]  # Remove "cobblemon:" prefix
         ball_name = ball_name.replace("_", " ")
-        formatted_ball = " ".join(word.capitalize() for word in ball_name.split())
-        
-        ttk.Label(info_frame, text=formatted_ball).grid(row=2, column=1, sticky=tk.W, padx=(10, 30))
-        
-        ttk.Label(info_frame, text="Trainer:", font=("Roboto", 10, "bold")).grid(row=2, column=2, sticky=tk.W, pady=5)
-        ttk.Label(info_frame, text=pokemon['original_trainer']).grid(row=2, column=3, sticky=tk.W, padx=(10, 0))
-        
-        # Row 4
-        ttk.Label(info_frame, text="Experience:", font=("Roboto", 10, "bold")).grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Label(info_frame, text=str(pokemon['experience'])).grid(row=3, column=1, sticky=tk.W, padx=(10, 30), columnspan=3)
+        return " ".join(word.capitalize() for word in ball_name.split())
 
     def create_stats_tab(self, pokemon):
         """Populate the Stats tab with IVs and EVs."""
@@ -915,37 +960,49 @@ class PokemonHomeApp:
         tk.Label(header_frame, text="Moves", font=("Roboto", 11, "bold"), 
                bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
         
-        # Moves list with improved styling
-        moves_frame = ttk.Frame(main_frame)
-        moves_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Create a table-like header
-        ttk.Label(moves_frame, text="Move Name", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
-        ttk.Label(moves_frame, text="Type", font=("Roboto", 10, "bold")).grid(row=0, column=1, sticky=tk.W, pady=(0, 10), padx=20)
-        
-        # Add separator under header
-        separator = ttk.Separator(moves_frame, orient='horizontal')
-        separator.grid(row=1, column=0, columnspan=2, sticky=tk.EW, pady=(0, 10))
-        
-        # Display moves with alternating row colors
+        # Get the moves
         moves = pokemon.get('moves', [])
-        for i, move in enumerate(moves):
-            if move is None:  # Skip None values
-                continue
+        
+        # Create a grid frame for the moves
+        moves_grid = ttk.Frame(main_frame)
+        moves_grid.pack(fill=tk.BOTH, expand=True, pady=10)
+        
+        # Configure the grid columns
+        moves_grid.columnconfigure(0, weight=1)
+        moves_grid.columnconfigure(1, weight=1)
+        
+        # If no moves, display a message
+        if not moves or all(move is None for move in moves):
+            no_moves_label = ttk.Label(moves_grid, text="No moves found", 
+                                    font=("Roboto", 10), foreground="#888888")
+            no_moves_label.grid(row=0, column=0, columnspan=2, pady=20)
+        else:
+            # Create a move card for each move in a 2x2 grid
+            for i, move in enumerate(moves):
+                if move is None:  # Skip None values
+                    continue
+                    
+                # Calculate row and column for 2x2 grid
+                row = i // 2
+                col = i % 2
                 
-            # We don't have move types in the data, so just showing the move names
-            bg_color = COLORS["background"] if i % 2 == 0 else "#F0F5FA"
-            
-            # Create frame for the row with background color
-            row_frame = tk.Frame(moves_frame, bg=bg_color)
-            row_frame.grid(row=i+2, column=0, columnspan=2, sticky=tk.EW)
-            
-            # Format move name - replace underscores with spaces and capitalize each word
-            formatted_move = move.replace("_", " ")
-            formatted_move = " ".join(word.capitalize() for word in formatted_move.split("-"))
-            
-            # Move name
-            ttk.Label(row_frame, text=formatted_move, background=bg_color).grid(row=0, column=0, sticky=tk.W, padx=5, pady=8)
+                # Create a frame for the move with nice styling
+                move_frame = tk.Frame(moves_grid, bg=COLORS["background"], padx=10, pady=10,
+                                    bd=1, relief=tk.SOLID)
+                move_frame.grid(row=row, column=col, padx=5, pady=5, sticky=tk.NSEW)
+                
+                # Format move name - replace hyphens with spaces and capitalize each word
+                formatted_move = " ".join(word.capitalize() for word in move.split("-"))
+                
+                # Move name with larger font
+                move_name = tk.Label(move_frame, text=formatted_move, 
+                                   font=("Roboto", 11, "bold"), bg=COLORS["background"],
+                                   fg=COLORS["text"])
+                move_name.pack(anchor=tk.CENTER, pady=(0, 5))
+                
+                # Add a subtle separator
+                separator = ttk.Separator(move_frame, orient='horizontal')
+                separator.pack(fill=tk.X, pady=5)
 
     def convert_to_pb8(self):
         """Convert the selected Pokémon's JSON file to .cb9 using the external .exe."""
@@ -1557,6 +1614,256 @@ class PokemonHomeApp:
                         
         except Exception as e:
             self.update_status(f"Error resolving box/slot conflicts: {str(e)}")
+
+    def create_origin_tab(self, pokemon):
+        """Populate the Origin tab with Pokémon's origin data and other details."""
+        # Create a scrollable frame for origin info
+        canvas = tk.Canvas(self.origin_tab, bg=COLORS["background"], highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self.origin_tab, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Origin Information Section
+        origin_header_frame = tk.Frame(scrollable_frame, bg=COLORS["primary"], padx=10, pady=5)
+        origin_header_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(origin_header_frame, text="Origin Information", 
+               font=("Roboto", 11, "bold"), bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
+        
+        # Create info grid for origin data
+        origin_frame = ttk.Frame(scrollable_frame)
+        origin_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        
+        # Determine origin game display name (convert abbreviation to full name)
+        game_names = {
+            # Gen 1
+            "RD": "Pokémon Red",
+            "BU": "Pokémon Blue",
+            "GN": "Pokémon Green",
+            "YW": "Pokémon Yellow",
+            
+            # Gen 2
+            "GD": "Pokémon Gold",
+            "SI": "Pokémon Silver",
+            "C": "Pokémon Crystal",
+            
+            # Gen 3
+            "R": "Pokémon Ruby",
+            "S": "Pokémon Sapphire",
+            "E": "Pokémon Emerald",
+            "FR": "Pokémon FireRed",
+            "LG": "Pokémon LeafGreen",
+            "CXD": "Pokémon Colosseum/XD",
+            
+            # Gen 4
+            "D": "Pokémon Diamond",
+            "P": "Pokémon Pearl",
+            "Pt": "Pokémon Platinum",
+            "HG": "Pokémon HeartGold",
+            "SS": "Pokémon SoulSilver",
+            
+            # Gen 5
+            "B": "Pokémon Black",
+            "W": "Pokémon White",
+            "B2": "Pokémon Black 2",
+            "W2": "Pokémon White 2",
+            
+            # Gen 6
+            "X": "Pokémon X",
+            "Y": "Pokémon Y",
+            "OR": "Pokémon Omega Ruby",
+            "AS": "Pokémon Alpha Sapphire",
+            
+            # Gen 7
+            "SN": "Pokémon Sun",
+            "MN": "Pokémon Moon",
+            "US": "Pokémon Ultra Sun",
+            "UM": "Pokémon Ultra Moon",
+            "GP": "Pokémon Let's Go Pikachu",
+            "GE": "Pokémon Let's Go Eevee",
+            "GO": "Pokémon GO",
+            
+            # Gen 8
+            "SW": "Pokémon Sword",
+            "SH": "Pokémon Shield",
+            "BD": "Pokémon Brilliant Diamond",
+            "SP": "Pokémon Shining Pearl",
+            "PLA": "Pokémon Legends: Arceus",
+            
+            # Gen 9
+            "SL": "Pokémon Scarlet",
+            "VL": "Pokémon Violet"
+        }
+        
+        origin_game = pokemon.get('origin_game', "Unknown")
+        game_display = game_names.get(origin_game, origin_game)
+        
+        # Row 1 - Origin Game
+        ttk.Label(origin_frame, text="Origin Game:", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(origin_frame, text=game_display).grid(row=0, column=1, sticky=tk.W, padx=(10, 30))
+        
+        # Row 2 - Met Info
+        ttk.Label(origin_frame, text="Met Location:", font=("Roboto", 10, "bold")).grid(row=1, column=0, sticky=tk.W, pady=5)
+        # Note: We only have the location ID, not the location name
+        ttk.Label(origin_frame, text=f"Location {pokemon.get('met_location', 'Unknown')}").grid(row=1, column=1, sticky=tk.W, padx=(10, 30))
+        
+        ttk.Label(origin_frame, text="Met Date:", font=("Roboto", 10, "bold")).grid(row=1, column=2, sticky=tk.W, pady=5)
+        
+        # Format date to DD/MM/YY if it exists and has the expected format
+        met_date = pokemon.get('met_date', 'Unknown')
+        if met_date != 'Unknown' and '-' in met_date:
+            try:
+                # Parse the date string (assuming YYYY-MM-DD format)
+                date_parts = met_date.split('-')
+                if len(date_parts) == 3:
+                    year, month, day = date_parts
+                    # Format as DD/MM/YYYY
+                    formatted_date = f"{day}/{month}/{year}"
+                    ttk.Label(origin_frame, text=formatted_date).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
+                else:
+                    ttk.Label(origin_frame, text=met_date).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
+            except:
+                ttk.Label(origin_frame, text=met_date).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
+        else:
+            ttk.Label(origin_frame, text=met_date).grid(row=1, column=3, sticky=tk.W, padx=(10, 0))
+        
+        # Row 3 - Met Level
+        ttk.Label(origin_frame, text="Met Level:", font=("Roboto", 10, "bold")).grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(origin_frame, text=str(pokemon.get('met_level', 'Unknown'))).grid(row=2, column=1, sticky=tk.W, padx=(10, 30))
+        
+        ttk.Label(origin_frame, text="Language:", font=("Roboto", 10, "bold")).grid(row=2, column=2, sticky=tk.W, pady=5)
+        
+        # Map language codes to names
+        language_names = {
+            1: "Japanese",
+            2: "English",
+            3: "French",
+            4: "Italian",
+            5: "German",
+            7: "Spanish",
+            8: "Korean",
+            9: "Chinese (Simplified)",
+            10: "Chinese (Traditional)"
+        }
+        
+        language_code = pokemon.get('language', 0)
+        language_name = language_names.get(language_code, f"Unknown ({language_code})")
+        ttk.Label(origin_frame, text=language_name).grid(row=2, column=3, sticky=tk.W, padx=(10, 0))
+        
+        # Physical Characteristics Section
+        physical_header_frame = tk.Frame(scrollable_frame, bg=COLORS["accent"], padx=10, pady=5)
+        physical_header_frame.pack(fill=tk.X, pady=(10, 10))
+        
+        tk.Label(physical_header_frame, text="Physical Characteristics", 
+               font=("Roboto", 11, "bold"), bg=COLORS["accent"], fg=COLORS["text"]).pack(anchor=tk.W)
+        
+        # Create info grid for physical data
+        physical_frame = ttk.Frame(scrollable_frame)
+        physical_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        
+        # Row 1 - Height & Weight
+        ttk.Label(physical_frame, text="Height:", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(physical_frame, text=f"{pokemon.get('height', 'Unknown')}").grid(row=0, column=1, sticky=tk.W, padx=(10, 30))
+        
+        ttk.Label(physical_frame, text="Weight:", font=("Roboto", 10, "bold")).grid(row=0, column=2, sticky=tk.W, pady=5)
+        ttk.Label(physical_frame, text=f"{pokemon.get('weight', 'Unknown')}").grid(row=0, column=3, sticky=tk.W, padx=(10, 0))
+        
+        # Row 2 - Scale
+        ttk.Label(physical_frame, text="Scale:", font=("Roboto", 10, "bold")).grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(physical_frame, text=f"{pokemon.get('scale', 'Unknown')}").grid(row=1, column=1, sticky=tk.W, padx=(10, 30))
+        
+        # Row 3 - Friendship & Tera Type
+        ttk.Label(physical_frame, text="Friendship:", font=("Roboto", 10, "bold")).grid(row=2, column=0, sticky=tk.W, pady=5)
+        
+        # Create a visual indicator for friendship level
+        friendship_value = pokemon.get('friendship', 0)
+        friendship_frame = tk.Frame(physical_frame, bg=COLORS["background"])
+        friendship_frame.grid(row=2, column=1, sticky=tk.W, padx=(10, 30))
+        
+        # Display numeric value
+        ttk.Label(friendship_frame, text=str(friendship_value)).pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Add a visual indicator (hearts) based on friendship level
+        hearts_frame = tk.Frame(friendship_frame, bg=COLORS["background"])
+        hearts_frame.pack(side=tk.LEFT)
+        
+        # Display hearts based on friendship level (max 5 hearts)
+        heart_levels = [0, 50, 100, 150, 200, 255]
+        heart_colors = ["#CCCCCC", "#FF9999", "#FF6666", "#FF3333", "#FF0000", "#FF0066"]
+        
+        for i in range(5):
+            if friendship_value >= heart_levels[i+1]:
+                color = heart_colors[i+1]
+            elif friendship_value >= heart_levels[i]:
+                color = heart_colors[i]
+            else:
+                color = "#CCCCCC"  # Gray for empty hearts
+                
+            heart = tk.Label(hearts_frame, text="♥", font=("Roboto", 10), fg=color, bg=COLORS["background"])
+            heart.pack(side=tk.LEFT, padx=1)
+        
+        ttk.Label(physical_frame, text="Tera Type:", font=("Roboto", 10, "bold")).grid(row=2, column=2, sticky=tk.W, pady=5)
+        
+        tera_type = pokemon.get('tera_type', 'Unknown')
+        ttk.Label(physical_frame, text=tera_type).grid(row=2, column=3, sticky=tk.W, padx=(10, 0))
+        
+        # Additional Data Section (if ribbons are present)
+        if 'ribbons' in pokemon and pokemon['ribbons']:
+            ribbons_header_frame = tk.Frame(scrollable_frame, bg=COLORS["primary"], padx=10, pady=5)
+            ribbons_header_frame.pack(fill=tk.X, pady=(10, 10))
+            
+            tk.Label(ribbons_header_frame, text="Ribbons & Marks", 
+                   font=("Roboto", 11, "bold"), bg=COLORS["primary"], fg="white").pack(anchor=tk.W)
+            
+            # Create info grid for ribbons
+            ribbons_frame = ttk.Frame(scrollable_frame)
+            ribbons_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+            
+            # Note: The ribbons are stored as integers that would need to be mapped to actual ribbon names
+            # For now, just display the ribbon IDs
+            ribbon_list = pokemon.get('ribbons', [])
+            if ribbon_list:
+                ttk.Label(ribbons_frame, text="Ribbons:", font=("Roboto", 10, "bold")).grid(row=0, column=0, sticky=tk.NW, pady=5)
+                
+                ribbons_text = ", ".join([f"Ribbon #{r}" for r in ribbon_list])
+                ttk.Label(ribbons_frame, text=ribbons_text, wraplength=400).grid(row=0, column=1, sticky=tk.W, padx=(10, 0), pady=5)
+        
+        # Technical Details Section (trainer IDs only)
+        has_technical_data = any(k in pokemon for k in ['tid', 'sid'])
+        
+        if has_technical_data:
+            technical_header_frame = tk.Frame(scrollable_frame, bg="#666666", padx=10, pady=5)  # Darker color for technical section
+            technical_header_frame.pack(fill=tk.X, pady=(10, 10))
+            
+            tk.Label(technical_header_frame, text="Technical Data", 
+                   font=("Roboto", 11, "bold"), bg="#666666", fg="white").pack(anchor=tk.W)
+            
+            # Create info grid for technical data
+            technical_frame = ttk.Frame(scrollable_frame)
+            technical_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+            
+            row = 0
+            if 'tid' in pokemon:
+                ttk.Label(technical_frame, text="Trainer ID:", font=("Roboto", 10, "bold")).grid(row=row, column=0, sticky=tk.W, pady=3)
+                ttk.Label(technical_frame, text=str(pokemon['tid'])).grid(row=row, column=1, sticky=tk.W, padx=(10, 30))
+                row += 1
+                
+            if 'sid' in pokemon:
+                ttk.Label(technical_frame, text="Secret ID:", font=("Roboto", 10, "bold")).grid(row=row, column=0, sticky=tk.W, pady=3)
+                ttk.Label(technical_frame, text=str(pokemon['sid'])).grid(row=row, column=1, sticky=tk.W, padx=(10, 30))
+                row += 1
+
+
 
 
 if __name__ == "__main__":
