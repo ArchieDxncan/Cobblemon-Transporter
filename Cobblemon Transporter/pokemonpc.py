@@ -32,6 +32,32 @@ COLORS = {
     "separator": "#D1DEE9"        # Light grey for separators
 }
 
+def create_rounded_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
+    points = [x1+radius, y1,
+              x1+radius, y1,
+              x2-radius, y1,
+              x2-radius, y1,
+              x2, y1,
+              x2, y1+radius,
+              x2, y1+radius,
+              x2, y2-radius,
+              x2, y2-radius,
+              x2, y2,
+              x2-radius, y2,
+              x2-radius, y2,
+              x1+radius, y2,
+              x1+radius, y2,
+              x1, y2,
+              x1, y2-radius,
+              x1, y2-radius,
+              x1, y1+radius,
+              x1, y1+radius,
+              x1, y1]
+    return self.create_polygon(points, smooth=True, **kwargs)
+
+# Add the method to the Canvas class
+tk.Canvas.create_rounded_rectangle = create_rounded_rectangle
+
 class PokemonHomeApp:
     def __init__(self, root):
         self.root = root
@@ -231,7 +257,7 @@ class PokemonHomeApp:
         separator.pack(fill=tk.X, pady=(0, 10))
         
         # Create a frame for the grid with a subtle border
-        grid_frame = tk.Frame(left_frame, bg=COLORS["secondary"], padx=2, pady=2, bd=1, relief=tk.SOLID)
+        grid_frame = tk.Frame(left_frame, bg=COLORS["secondary"], padx=2, pady=2)
         grid_frame.pack(fill=tk.BOTH, expand=True)
         
         # Inner frame for the grid buttons
@@ -243,22 +269,28 @@ class PokemonHomeApp:
             row = i // GRID_COLS
             col = i % GRID_COLS
             
-            # Create a frame for each button to add padding and borders
-            btn_frame = tk.Frame(inner_grid_frame, bd=1, relief=tk.SOLID, 
-                               bg=COLORS["separator"], padx=1, pady=1)
-            btn_frame.grid(row=row, column=col, padx=3, pady=3)
+            # Create a frame for each button to add padding and rounded corners
+            btn_frame = tk.Frame(inner_grid_frame, bg=COLORS["background"], padx=1, pady=1)
+            btn_frame.grid(row=row, column=col, padx=2, pady=2)
             
-            button = tk.Button(btn_frame, bg=COLORS["empty_slot"], relief=tk.FLAT, 
-                              width=6, height=3, bd=0, highlightthickness=0)
-            button.pack(fill=tk.BOTH, expand=True)
+            # Create a canvas for rounded corners - make it larger to allow sprite overflow
+            canvas = tk.Canvas(btn_frame, width=70, height=70, bg=COLORS["background"], 
+                             highlightthickness=0, bd=0)
+            canvas.pack(fill=tk.BOTH, expand=True)
+            
+            # Draw rounded rectangle - will be updated when Pokémon is added
+            canvas.create_rounded_rectangle(0, 0, 70, 70, radius=8, 
+                                         fill=COLORS["empty_slot"], outline="")
+            
+            button = tk.Button(canvas, bg=COLORS["empty_slot"], relief=tk.FLAT, 
+                             width=60, height=60, bd=0, highlightthickness=0)
+            button.place(x=5, y=5, width=60, height=60)  # Center the button in the larger canvas
             button.bind("<Button-1>", lambda e, idx=i: self.show_pokemon_info(e, "local", idx))
             
             # Add hover effect
-            button.bind("<Enter>", lambda e, btn=button: btn.config(bg=COLORS["secondary"]) 
-                      if btn.cget("bg") == COLORS["empty_slot"] else None)
-            button.bind("<Leave>", lambda e, btn=button, idx=i: 
-                      btn.config(bg=COLORS["empty_slot"]) 
-                      if self.local_storage[self.current_local_box][idx] is None else None)
+            button.bind("<Enter>", lambda e, btn=button, c=canvas: self.on_button_enter(e, btn, c))
+            button.bind("<Leave>", lambda e, btn=button, c=canvas, idx=i: 
+                      self.on_button_leave(e, btn, c, idx))
             
             self.local_buttons.append(button)
 
@@ -320,26 +352,41 @@ class PokemonHomeApp:
         
                 if os.path.exists(sprite_path):
                     img = Image.open(sprite_path)
-                    img = img.resize((68, 56), Image.Resampling.LANCZOS)  # Use LANCZOS for better quality
+                    # Keep original sprite size (68x56) for pixel-perfect display
+                    img = img.resize((85, 70), Image.Resampling.LANCZOS)
                     img = ImageTk.PhotoImage(img)
                     
                     # Set background color based on whether the Pokémon is shiny
                     bg_color = COLORS["shiny_slot"] if pokemon['shiny'] else COLORS["filled_slot"]
                     
-                    button.config(image=img, text="", compound=tk.BOTTOM, width=46, height=50, 
-                                 anchor='s', bg=bg_color)
+                    # Update the canvas background with larger rounded rectangle
+                    canvas = button.master
+                    canvas.delete(0)  # Remove the old rectangle
+                    canvas.create_rounded_rectangle(0, 0, 70, 70, radius=8, 
+                                                 fill=bg_color, outline="")
+                    
+                    # Configure button to display sprite
+                    button.config(image=img, text="", compound=tk.CENTER, 
+                                 width=60, height=60, bg=bg_color)
                     button.image = img  # Keep a reference to avoid garbage collection
                 else:
                     # Use a gradient background for Pokémon without sprites
                     # Capitalize the species name for display
                     display_name = pokemon['species'].capitalize()
+                    canvas = button.master
+                    canvas.delete(0)  # Remove the old rectangle
+                    canvas.create_rounded_rectangle(0, 0, 70, 70, radius=8, 
+                                                 fill=COLORS["filled_slot"], outline="")
                     button.config(bg=COLORS["filled_slot"], text=display_name,
                                 font=("Roboto", 8, "bold"), fg=COLORS["text"])
             else:
-                # Reset the button completely, including dimensions
+                # Reset the button completely
+                canvas = button.master
+                canvas.delete(0)  # Remove the old rectangle
+                canvas.create_rounded_rectangle(0, 0, 70, 70, radius=8, 
+                                             fill=COLORS["empty_slot"], outline="")
                 button.config(image="", text="", compound=tk.NONE,
-                            width=6, height=3,  # Reset to original dimensions
-                            bg=COLORS["empty_slot"], anchor='center')
+                            width=60, height=60, bg=COLORS["empty_slot"])
                 button.image = None  # Clear the reference
 
     def create_details_panel(self):
@@ -369,24 +416,44 @@ class PokemonHomeApp:
         self.notebook.add(self.stats_tab, text="Stats")
         self.notebook.add(self.moves_tab, text="Moves")
         
+        # Create a scrollable frame for overview
+        canvas = tk.Canvas(self.overview_tab, bg=COLORS["background"], highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self.overview_tab, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
         # Add a default message when no Pokémon is selected
-        self.default_message = ttk.Label(self.overview_tab, text="Select a Pokémon to view details", 
+        self.default_message = ttk.Label(scrollable_frame, text="Select a Pokémon to view details", 
                                       font=("Roboto", 11), foreground="#888888")
         self.default_message.pack(pady=50)
-
+        
         # Add buttons frame at the bottom
-        buttons_frame = tk.Frame(inner_details, bg=COLORS["background"], pady=10)
-        buttons_frame.pack(fill=tk.X)
+        buttons_frame = tk.Frame(self.details_frame, bg=COLORS["background"], pady=10)
+        buttons_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
         # "Export to Showdown" button with blue styling
         self.showdown_button = ttk.Button(buttons_frame, text="Export to Showdown", style="Showdown.TButton",
                                       command=self.export_to_showdown)
-        self.showdown_button.pack(side=tk.LEFT)
+        self.showdown_button.pack(side=tk.LEFT, padx=5)
         
         # "Convert to .cb9" button with improved styling
         self.convert_button = ttk.Button(buttons_frame, text="Convert to .cb9", style="Convert.TButton", 
                                       command=self.convert_to_pb8)
-        self.convert_button.pack(side=tk.RIGHT)
+        self.convert_button.pack(side=tk.RIGHT, padx=5)
+        
+        # Initially hide the buttons
+        self.showdown_button.pack_forget()
+        self.convert_button.pack_forget()
 
     def create_status_bar(self):
         """Create a status bar at the bottom of the application."""
@@ -546,7 +613,7 @@ class PokemonHomeApp:
             output_lines.append(f"IVs: {' / '.join(iv_list)}")
         
         # Add moves
-        moves = pokemon.get("moves", [])
+        moves = pokemon.get('moves', [])
         for move in moves:
             # Format move name (replace hyphens with spaces and capitalize each word)
             formatted_move = " ".join(word.capitalize() for word in move.split("-"))
@@ -581,8 +648,54 @@ class PokemonHomeApp:
             # Moves Tab
             self.create_moves_tab(pokemon)
             
+            # Show the buttons
+            self.showdown_button.pack(side=tk.LEFT, padx=5)
+            self.convert_button.pack(side=tk.RIGHT, padx=5)
+            
             # Update status
             self.update_status(f"Selected: {pokemon['species']} (Level {pokemon['level']})")
+            
+            # Force update the window
+            self.root.update_idletasks()
+        else:
+            # Clear previous content in tabs
+            for widget in self.overview_tab.winfo_children():
+                widget.destroy()
+            for widget in self.stats_tab.winfo_children():
+                widget.destroy()
+            for widget in self.moves_tab.winfo_children():
+                widget.destroy()
+            
+            # Create a scrollable frame for overview
+            canvas = tk.Canvas(self.overview_tab, bg=COLORS["background"], highlightthickness=0)
+            scrollbar = ttk.Scrollbar(self.overview_tab, orient="vertical", command=canvas.yview)
+            scrollable_frame = ttk.Frame(canvas)
+            
+            scrollable_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+            
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            canvas.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
+            
+            # Add a default message
+            self.default_message = ttk.Label(scrollable_frame, text="Select a Pokémon to view details", 
+                                          font=("Roboto", 11), foreground="#888888")
+            self.default_message.pack(pady=50)
+            
+            # Hide the buttons
+            self.showdown_button.pack_forget()
+            self.convert_button.pack_forget()
+            
+            # Update status
+            self.update_status("No Pokémon selected")
+            
+            # Force update the window
+            self.root.update_idletasks()
 
     def create_overview_tab(self, pokemon):
         """Populate the Overview tab with Pokémon details."""
@@ -635,8 +748,8 @@ class PokemonHomeApp:
         # Show nickname in quotes if it's different from species (capitalize first letter)
         formatted_nickname = pokemon['nickname'].capitalize()
         if formatted_nickname.lower() != formatted_species.lower():
-            nickname_label = ttk.Label(name_frame, text=f'"{pokemon['nickname']}"', 
-                                   font=("Roboto", 12, "italic"), foreground="#666666")
+            nickname_label = ttk.Label(name_frame, text=f"\"{pokemon['nickname']}\"", 
+                           font=("Roboto", 12, "italic"), foreground="#666666")
             nickname_label.pack(anchor=tk.W)
         
         # Shiny indicator if applicable
@@ -815,7 +928,11 @@ class PokemonHomeApp:
         separator.grid(row=1, column=0, columnspan=2, sticky=tk.EW, pady=(0, 10))
         
         # Display moves with alternating row colors
-        for i, move in enumerate(pokemon['moves']):
+        moves = pokemon.get('moves', [])
+        for i, move in enumerate(moves):
+            if move is None:  # Skip None values
+                continue
+                
             # We don't have move types in the data, so just showing the move names
             bg_color = COLORS["background"] if i % 2 == 0 else "#F0F5FA"
             
@@ -1235,8 +1352,9 @@ class PokemonHomeApp:
             button.bind("<ButtonRelease-3>", lambda e, idx=i: self.end_drag(e, idx))
             
             # We'll also need to keep track of the original appearance
-            button.bind("<Enter>", lambda e, btn=button: self.on_button_enter(e, btn))
-            button.bind("<Leave>", lambda e, btn=button: self.on_button_leave(e, btn))
+            canvas = button.master  # Get the canvas that contains the button
+            button.bind("<Enter>", lambda e, btn=button, c=canvas: self.on_button_enter(e, btn, c))
+            button.bind("<Leave>", lambda e, btn=button, c=canvas, idx=i: self.on_button_leave(e, btn, c, idx))
 
     def start_drag(self, event, idx):
         """Start dragging a Pokémon with right-click."""
@@ -1341,7 +1459,7 @@ class PokemonHomeApp:
         # Update the UI
         self.update_grid_buttons()
 
-    def on_button_enter(self, event, button):
+    def on_button_enter(self, event, button, c):
         """Handle mouse enter event for box buttons."""
         # Skip if we're currently dragging
         if hasattr(self, 'is_dragging') and self.is_dragging:
@@ -1349,17 +1467,16 @@ class PokemonHomeApp:
         
         idx = self.local_buttons.index(button)
         if self.local_storage[self.current_local_box][idx] is None:
-            button.config(bg=COLORS["secondary"])
+            c.itemconfig(0, fill=COLORS["secondary"])
 
-    def on_button_leave(self, event, button):
+    def on_button_leave(self, event, button, c, idx):
         """Handle mouse leave event for box buttons."""
         # Skip if we're currently dragging
         if hasattr(self, 'is_dragging') and self.is_dragging:
             return
             
-        idx = self.local_buttons.index(button)
         if self.local_storage[self.current_local_box][idx] is None:
-            button.config(bg=COLORS["empty_slot"])
+            c.itemconfig(0, fill=COLORS["empty_slot"])
 
     def update_pokemon_box_slot(self, pokemon, box_num, slot_num):
         """Update a Pokémon's box and slot data in its JSON file."""
