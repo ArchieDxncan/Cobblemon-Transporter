@@ -5,8 +5,22 @@ import hashlib
 import os
 import requests
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk, font
 from datetime import date
+import argparse
+import sys
+import threading
+
+# Define colors directly in code
+THEME_PRIMARY = "#3f51b5"  # Primary blue
+THEME_SECONDARY = "#303f9f"  # Darker blue
+THEME_ACCENT = "#ff4081"  # Pink accent
+THEME_BACKGROUND = "#f5f5f6"  # Light gray background
+THEME_SURFACE = "#ffffff"  # White surface
+THEME_ERROR = "#f44336"  # Red for errors
+THEME_SUCCESS = "#4caf50"  # Green for success
+THEME_TEXT_PRIMARY = "#212121"  # Dark text
+THEME_TEXT_SECONDARY = "#757575"  # Gray text
 
 # Cache for UUID-to-username mappings
 uuid_cache = {}
@@ -15,30 +29,100 @@ uuid_cache = {}
 CACHE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'uuid_cache.json')
 
-def select_file():
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
+# Parse command line arguments
+def parse_args():
+    parser = argparse.ArgumentParser(description='Parse Cobblemon .dat files')
+    parser.add_argument('--cli', action='store_true', help='Run in CLI mode without GUI dialogs')
+    parser.add_argument('--files', type=str, help='Path to the .dat file to process')
+    return parser.parse_args()
 
-    #response = messagebox.askyesno("Import Cobblemon?", "Do you want to import a Cobblemon .dat file?")
-    #if not response:
-    #    print("Import canceled.")
-    #    return None
-    
+def select_file():
     file_path = filedialog.askopenfilename(title="Select Cobblemon .dat file", filetypes=[("DAT Files", "*.dat")])
-    if not file_path:
-        print("No file selected. Exiting.")
-        return None
-    
     return file_path
 
 def load_nbt(file_path):
     # Load the NBT file
     try:
         nbt_file = nbtlib.load(file_path)
+        # Debug: Print the structure of the NBT file to understand it better
+        print("NBT File Structure:")
+        print(f"Type of nbt_file: {type(nbt_file)}")
+        print(f"Top-level keys: {list(nbt_file.keys())}")
+        
+        # Check if there are party slots (Slot0-Slot5)
+        party_slots = [key for key in nbt_file.keys() if key.startswith('Slot') and key[4:].isdigit()]
+        if party_slots:
+            print(f"Found party slots: {party_slots}")
+            # Print structure of a party Pokémon as example
+            if party_slots:
+                first_slot = party_slots[0]
+                print(f"Party Pokémon structure ({first_slot}):")
+                if first_slot in nbt_file:
+                    print(f"Keys in {first_slot}: {list(nbt_file[first_slot].keys()) if hasattr(nbt_file[first_slot], 'keys') else 'Not a dictionary'}")
+        
+        # Check if there are box structures directly in the top level
+        box_keys = [key for key in nbt_file.keys() if key.startswith('Box') and key[3:].isdigit()]
+        if box_keys:
+            print(f"Found box keys at top level: {box_keys}")
+            # Print structure of the first box as example
+            if box_keys:
+                first_box = box_keys[0]
+                print(f"First box structure ({first_box}):")
+                if hasattr(nbt_file[first_box], 'keys'):
+                    print(f"Keys in {first_box}: {list(nbt_file[first_box].keys())}")
+                    # Print a sample slot from this box
+                    slot_keys = [key for key in nbt_file[first_box].keys() if key.startswith('Slot') and key[4:].isdigit()]
+                    if slot_keys:
+                        sample_slot = slot_keys[0]
+                        print(f"Sample slot in {first_box}: {sample_slot}")
+                        print(f"Keys in {first_box}.{sample_slot}: {list(nbt_file[first_box][sample_slot].keys()) if hasattr(nbt_file[first_box][sample_slot], 'keys') else 'Not a dictionary'}")
+                else:
+                    print(f"{first_box} is not a dictionary-like object, it's a {type(nbt_file[first_box])}")
+        
+        # Check more detailed PC structure
+        if 'pc' in nbt_file:
+            print("\nFound 'pc' key in top level")
+            if hasattr(nbt_file['pc'], 'keys'):
+                print(f"Keys in 'pc': {list(nbt_file['pc'].keys())}")
+                
+                # Check if the PC has a boxes list/array
+                if 'boxes' in nbt_file['pc']:
+                    print(f"'pc.boxes' type: {type(nbt_file['pc']['boxes'])}")
+                    if isinstance(nbt_file['pc']['boxes'], list):
+                        print(f"Number of boxes in pc.boxes: {len(nbt_file['pc']['boxes'])}")
+                        if len(nbt_file['pc']['boxes']) > 0:
+                            first_box = nbt_file['pc']['boxes'][0]
+                            print(f"First box in pc.boxes type: {type(first_box)}")
+                            if hasattr(first_box, 'keys'):
+                                print(f"Keys in first box: {list(first_box.keys())}")
+                                
+                                # Check if there's a 'pokemon' list in the box
+                                if 'pokemon' in first_box and isinstance(first_box['pokemon'], list):
+                                    print(f"Number of Pokémon in first box: {len(first_box['pokemon'])}")
+                                    if len(first_box['pokemon']) > 0:
+                                        print(f"First Pokémon in box type: {type(first_box['pokemon'][0])}")
+                                        if hasattr(first_box['pokemon'][0], 'keys'):
+                                            print(f"Keys in first Pokémon: {list(first_box['pokemon'][0].keys())}")
+                                            # Particularly interested in slot_number for our use case
+                                            if 'slot_number' in first_box['pokemon'][0]:
+                                                print(f"slot_number value: {first_box['pokemon'][0]['slot_number']}")
+                
+                # Check if PC has direct Box0, Box1, etc. structure
+                pc_box_keys = [key for key in nbt_file['pc'].keys() if key.startswith('Box') and key[3:].isdigit()]
+                if pc_box_keys:
+                    print(f"Found box keys inside 'pc': {pc_box_keys}")
+                    # Print structure of the first box as example
+                    first_pc_box = pc_box_keys[0]
+                    print(f"First PC box structure ({first_pc_box}):")
+                    if hasattr(nbt_file['pc'][first_pc_box], 'keys'):
+                        print(f"Keys in pc.{first_pc_box}: {list(nbt_file['pc'][first_pc_box].keys())}")
+            else:
+                print(f"'pc' is not a dictionary-like object, it's a {type(nbt_file['pc'])}")
+        
         return nbt_file
     except Exception as e:
-        print(f"Error loading NBT file: {e}")
-        return None
+        print(f"Error loading NBT file: {str(e)}")
+        return None, str(e)
 
 def generate_unique_filename(pokemon_data):
     # Use species, level, and a hash of the stats to generate a unique filename
@@ -64,20 +148,112 @@ def fetch_username_from_uuid(uuid):
             uuid_cache[uuid] = username
             return username
         else:
-            print(f"Failed to fetch username for UUID {uuid}. Status code: {response.status_code}")
             return 'Unknown'
     except Exception as e:
-        print(f"Error fetching username from UUID: {e}")
         return 'Unknown'
 
 def extract_pokemon_data(nbt_data, slot):
     if not nbt_data:
-        return None
+        return None, "Invalid NBT data"
     
     try:
-        # Extract the Pokémon's main data
-        pokemon_data = nbt_data[slot]  # Use the slot parameter to get the specific Pokémon
-
+        # Parse the slot parameter to get the actual data
+        pokemon_data = None
+        box_number = None
+        slot_number = None
+        
+        # Check if the slot parameter is a direct key (e.g., 'Slot0' for party)
+        if slot in nbt_data:
+            pokemon_data = nbt_data[slot]
+            # This is a party Pokémon - assign to box 0 (party)
+            if slot.startswith('Slot') and slot[4:].isdigit():
+                try:
+                    box_number = 0  # Party Pokémon (box 0)
+                    slot_number = int(slot[4:]) + 1  # Convert from 0-indexed to 1-indexed
+                except ValueError:
+                    pass
+        # Check if the slot parameter is a compound key (e.g., 'Box0 -> Slot1')
+        elif '->' in slot:
+            parts = slot.split(' -> ')
+            if len(parts) == 2 and parts[0].startswith('Box') and parts[1].startswith('Slot'):
+                box_key = parts[0]
+                slot_key = parts[1]
+                
+                # Get box and slot indices
+                try:
+                    box_idx = int(box_key[3:])
+                    slot_idx = int(slot_key[4:])
+                    
+                    # Track if we found the data
+                    found = False
+                    
+                    # Try strategy 1: Direct Box0/Slot0 access at top level
+                    if box_key in nbt_data and slot_key in nbt_data[box_key]:
+                        pokemon_data = nbt_data[box_key][slot_key]
+                        box_number = box_idx + 1  # Convert from 0-indexed to 1-indexed
+                        slot_number = slot_idx + 1  # Convert from 0-indexed to 1-indexed
+                        found = True
+                    
+                    # Try strategy 2: pc.boxes[box_idx].pokemon array with slot_number
+                    if not found and 'pc' in nbt_data and 'boxes' in nbt_data['pc'] and isinstance(nbt_data['pc']['boxes'], list):
+                        # Check if the box index is valid
+                        if 0 <= box_idx < len(nbt_data['pc']['boxes']):
+                            box = nbt_data['pc']['boxes'][box_idx]
+                            
+                            # Check if the Pokemon list exists in this box
+                            if 'pokemon' in box and isinstance(box['pokemon'], list):
+                                # Find the Pokemon with matching slot in this box
+                                for poke in box['pokemon']:
+                                    if 'slot_number' in poke and poke['slot_number'] == slot_idx:
+                                        pokemon_data = poke
+                                        box_number = box_idx + 1  # Convert from 0-indexed to 1-indexed
+                                        slot_number = slot_idx + 1  # Convert from 0-indexed to 1-indexed
+                                        found = True
+                                        break
+                    
+                    # Try strategy 3: Direct pc.Box0/Slot0 access
+                    if not found and 'pc' in nbt_data:
+                        if box_key in nbt_data['pc'] and slot_key in nbt_data['pc'][box_key]:
+                            pokemon_data = nbt_data['pc'][box_key][slot_key]
+                            box_number = box_idx + 1
+                            slot_number = slot_idx + 1
+                            found = True
+                    
+                    # Try strategy 4: Maybe box_idx.slot_idx format in pc
+                    if not found and 'pc' in nbt_data:
+                        pc_data = nbt_data['pc']
+                        # Convert string box/slot index to actual keys
+                        str_box_idx = str(box_idx)
+                        str_slot_idx = str(slot_idx)
+                        
+                        if str_box_idx in pc_data and isinstance(pc_data[str_box_idx], dict):
+                            if str_slot_idx in pc_data[str_box_idx]:
+                                pokemon_data = pc_data[str_box_idx][str_slot_idx]
+                                box_number = box_idx + 1
+                                slot_number = slot_idx + 1
+                                found = True
+                    
+                    # Try strategy 5: Maybe just a single pc.pokemon array with indices
+                    if not found and 'pc' in nbt_data and 'pokemon' in nbt_data['pc'] and isinstance(nbt_data['pc']['pokemon'], list):
+                        for poke in nbt_data['pc']['pokemon']:
+                            if ('box_number' in poke and poke['box_number'] == box_idx and
+                                'slot_number' in poke and poke['slot_number'] == slot_idx):
+                                pokemon_data = poke
+                                box_number = box_idx + 1
+                                slot_number = slot_idx + 1
+                                found = True
+                                break
+                    
+                    if not found:
+                        return None, f"Could not find Pokémon data for {slot} in any NBT structure"
+                
+                except (ValueError, IndexError, KeyError) as e:
+                    return None, f"Error parsing slot format '{slot}': {str(e)}"
+        
+        # If we couldn't get the Pokémon data, return an error
+        if pokemon_data is None:
+            return None, f"Could not extract Pokémon data from slot: {slot}"
+        
         # Extract species and remove 'cobblemon:' prefix if it exists
         species = pokemon_data['Species']
         if species.startswith('cobblemon:'):
@@ -105,7 +281,6 @@ def extract_pokemon_data(nbt_data, slot):
             
             moves.append(move_name)  # Append the (potentially hyphenated) move name
     
-
         # Convert IVs and EVs to integers and ensure they are lists
         ivs = {stat: int(pokemon_data['IVs'].get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
         evs = {stat: int(pokemon_data['EVs'].get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
@@ -170,7 +345,7 @@ def extract_pokemon_data(nbt_data, slot):
             "memory_feeling": memory_data.get('MemoryFeeling', 0),
             "memory_variable": memory_data.get('MemoryVariable', 0),
         }
-
+        
         # Create a simple dictionary with extracted data
         pokemon_info = {
             "species": species,
@@ -213,12 +388,18 @@ def extract_pokemon_data(nbt_data, slot):
             "fateful_encounter": fateful_encounter,
             "memories": memories
         }
-
-        return pokemon_info
-
-    except KeyError as e:
-        print(f"Missing key in NBT data: {e}")
-        return None
+        
+        # Add box and slot information if available
+        if box_number is not None and slot_number is not None:
+            pokemon_info['box_number'] = box_number
+            pokemon_info['slot_number'] = slot_number
+        
+        return pokemon_info, None
+    except Exception as e:
+        import traceback
+        error_msg = f"Error extracting pokemon data: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)  # Print for debugging
+        return None, error_msg
 
 def load_hyphen_moves():
     hyphen_moves_file = os.path.join(CACHE_DIR, 'hyphens.json')
@@ -227,6 +408,51 @@ def load_hyphen_moves():
             return json.load(f)
     else:
         return {}
+
+def find_available_box_slot():
+    """Find an available box slot for a Pokémon by checking existing JSON files"""
+    try:
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        cobblemon_dir = os.path.join(script_dir, 'cobblemon')
+        
+        # Ensure the directory exists
+        if not os.path.exists(cobblemon_dir):
+            os.makedirs(cobblemon_dir, exist_ok=True)
+            # If directory was just created, first slot in first box is available
+            return 1, 1
+        
+        # Maximum box and slot numbers
+        MAX_BOXES = 30
+        MAX_SLOTS_PER_BOX = 30
+        
+        # Keep track of occupied slots
+        occupied_slots = set()
+        
+        # Parse all existing JSON files to find occupied slots
+        for filename in os.listdir(cobblemon_dir):
+            if filename.endswith('.json'):
+                try:
+                    with open(os.path.join(cobblemon_dir, filename), 'r') as f:
+                        pokemon_data = json.load(f)
+                        if 'box_number' in pokemon_data and 'slot_number' in pokemon_data:
+                            box_num = pokemon_data['box_number']
+                            slot_num = pokemon_data['slot_number']
+                            occupied_slots.add((box_num, slot_num))
+                except:
+                    # Skip files that can't be parsed
+                    continue
+        
+        # Find first available slot
+        for box in range(1, MAX_BOXES + 1):
+            for slot in range(1, MAX_SLOTS_PER_BOX + 1):
+                if (box, slot) not in occupied_slots:
+                    return box, slot
+        
+        # If all slots are occupied, default to box 1, slot 1 (will overwrite)
+        return 1, 1
+    except Exception as e:
+        # In case of any error, default to box 1, slot 1
+        return 1, 1
 
 def save_pokemon_to_json(pokemon_info):
     if pokemon_info:
@@ -238,15 +464,25 @@ def save_pokemon_to_json(pokemon_info):
         # Ensure the cobblemon directory exists
         os.makedirs(cobblemon_dir, exist_ok=True)
 
+        # Use existing box and slot if available, otherwise find available ones
+        if 'box_number' in pokemon_info and 'slot_number' in pokemon_info:
+            box_num = pokemon_info['box_number']
+            slot_num = pokemon_info['slot_number']
+        else:
+            box_num, slot_num = find_available_box_slot()
+            # Add box and slot information to the Pokémon data
+            pokemon_info['box_number'] = box_num
+            pokemon_info['slot_number'] = slot_num
+
         filename = generate_unique_filename(pokemon_info)
         file_path = os.path.join(cobblemon_dir, filename)
 
         # Save the Pokémon data to a JSON file
         with open(file_path, 'w') as json_file:
             json.dump(pokemon_info, json_file, indent=4)
-        print(f"Saved Pokémon data to {file_path}")
+        return f"Saved to {filename} (Box {box_num}, Slot {slot_num})"
     else:
-        print("No Pokémon data to save.")
+        return "No Pokémon data to save."
 
 def save_cache():
     # Ensure the cache directory exists
@@ -262,50 +498,593 @@ def load_cache():
             return json.load(cache_file)
     return {}
 
-def main():
-    # Load the cache at the start of the script
-    global uuid_cache
-    uuid_cache = load_cache()
+def process_file(file_path, output_text, progress_var=None, status_label=None):
+    """Process a .dat file and display results in the output text widget"""
+    if not file_path:
+        output_text.insert(tk.END, "No file selected.\n")
+        return
 
-    file_path =  select_file()
+    # Update status label if provided
+    if status_label:
+        status_label.config(text=f"Processing: {os.path.basename(file_path)}")
+    
+    output_text.insert(tk.END, f"Processing file: {file_path}\n", "heading")
+    output_text.see(tk.END)
+    
     nbt_data = load_nbt(file_path)
-
-    if nbt_data:
-        # Loop through all possible slots (assuming slots are named Slot0, Slot1, etc.)
-        for i in range(6):  # Assuming there are up to 6 slots
-            slot = f'Slot{i}'
-            if slot in nbt_data:
-                pokemon_info = extract_pokemon_data(nbt_data, slot)
-                if pokemon_info:
-                    print(f"Extracted Pokémon Data for {slot}:")
-                    for key, value in pokemon_info.items():
-                        print(f"{key}: {value}")
-                    save_pokemon_to_json(pokemon_info)  # Save the Pokémon data to a JSON file
-                else:
-                    print(f"Failed to extract Pokémon data for {slot}.")
-            else:
-                print(f"No Pokémon found in {slot}.")
-
-        # Check for boxed Pokémon (Box0 to Box29, each containing Slot0 to Slot29)
-        for box in range(30):  
+    
+    if isinstance(nbt_data, tuple):  # Error occurred
+        nbt_data, error = None, nbt_data[1]
+        output_text.insert(tk.END, f"❌ Error loading NBT file: {error}\n", "error")
+        output_text.see(tk.END)
+        if status_label:
+            status_label.config(text="Error loading file")
+        return
+    
+    pokemon_count = 0
+    error_count = 0
+    total_possible = 0  # For progress calculation
+    
+    # Count total possible Pokémon slots for progress bar
+    # Party slots
+    total_possible += sum(1 for i in range(6) if f'Slot{i}' in nbt_data)
+    
+    # Check for different PC box structures
+    box_structure = "unknown"
+    if any(f'Box{i}' in nbt_data for i in range(30)):
+        # Traditional Box0, Box1, etc. structure
+        box_structure = "direct"
+        for box in range(30):
             box_key = f'Box{box}'
             if box_key in nbt_data:
-                for slot in range(30):  
+                total_possible += sum(1 for slot in range(30) if f'Slot{slot}' in nbt_data[box_key])
+    elif 'pc' in nbt_data:
+        if 'boxes' in nbt_data['pc'] and isinstance(nbt_data['pc']['boxes'], list):
+            # Structure with pc.boxes array
+            box_structure = "pc_boxes_array"
+            for box_idx, box in enumerate(nbt_data['pc']['boxes']):
+                if 'pokemon' in box and isinstance(box['pokemon'], list):
+                    total_possible += len(box['pokemon'])
+        elif any(f'Box{i}' in nbt_data['pc'] for i in range(30)):
+            # Structure with pc.Box0, pc.Box1, etc.
+            box_structure = "pc_boxes_direct"
+            for box in range(30):
+                box_key = f'Box{box}'
+                if box_key in nbt_data['pc']:
+                    total_possible += sum(1 for slot in range(30) if f'Slot{slot}' in nbt_data['pc'][box_key])
+    
+    output_text.insert(tk.END, f"Detected box structure: {box_structure}\n", "heading")
+    processed_count = 0
+
+    # Process party Pokémon
+    for i in range(6):
+        slot = f'Slot{i}'
+        if slot in nbt_data:
+            pokemon_info, error = extract_pokemon_data(nbt_data, slot)
+            processed_count += 1
+            if pokemon_info:
+                pokemon_count += 1
+                save_result = save_pokemon_to_json(pokemon_info)
+                shiny_star = "⭐ " if pokemon_info['shiny'] else ""
+                output_text.insert(tk.END, f"✅ Party {slot}: {shiny_star}{pokemon_info['species']} (Lv. {pokemon_info['level']}) - {save_result}\n", 
+                                   "success")
+            else:
+                error_count += 1
+                output_text.insert(tk.END, f"❌ Error in Party {slot}: {error}\n", "error")
+            output_text.see(tk.END)
+            
+            # Update progress bar if provided
+            if progress_var and total_possible > 0:
+                progress_var.set((processed_count / total_possible) * 100)
+
+    # Process PC boxes based on detected structure
+    if box_structure == "direct":
+        # Process traditional Box0, Box1, etc. structure
+        for box in range(30):
+            box_key = f'Box{box}'
+            if box_key in nbt_data:
+                for slot in range(30):
                     slot_key = f'Slot{slot}'
-                    if slot_key in nbt_data[box_key]:  # Ensure the slot exists in the box
-                        pokemon_info = extract_pokemon_data(nbt_data[box_key], slot_key)
+                    # Only process if the slot actually exists in the box
+                    if slot_key in nbt_data[box_key]:
+                        # Create a compound slot key in the format "Box{box} -> Slot{slot}"
+                        compound_slot_key = f"{box_key} -> {slot_key}"
+                        pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                        processed_count += 1
+                        if pokemon_info:
+                            pokemon_count += 1
+                            save_result = save_pokemon_to_json(pokemon_info)
+                            shiny_star = "⭐ " if pokemon_info['shiny'] else ""
+                            output_text.insert(tk.END, f"✅ {box_key} {slot_key}: {shiny_star}{pokemon_info['species']} (Lv. {pokemon_info['level']}) - {save_result}\n", 
+                                              "success")
+                        else:
+                            error_count += 1
+                            output_text.insert(tk.END, f"❌ Error in {box_key} {slot_key}: {error}\n", "error")
+                        output_text.see(tk.END)
+                        
+                        # Update progress bar if provided
+                        if progress_var and total_possible > 0:
+                            progress_var.set((processed_count / total_possible) * 100)
+    
+    elif box_structure == "pc_boxes_array":
+        # Process pc.boxes array structure
+        for box_idx, box in enumerate(nbt_data['pc']['boxes']):
+            box_key = f'Box{box_idx}'
+            if 'pokemon' in box and isinstance(box['pokemon'], list):
+                for poke in box['pokemon']:
+                    if 'slot_number' in poke:
+                        slot_idx = poke['slot_number']
+                        slot_key = f'Slot{slot_idx}'
+                        compound_slot_key = f"{box_key} -> {slot_key}"
+                        pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                        processed_count += 1
+                        if pokemon_info:
+                            pokemon_count += 1
+                            save_result = save_pokemon_to_json(pokemon_info)
+                            shiny_star = "⭐ " if pokemon_info['shiny'] else ""
+                            output_text.insert(tk.END, f"✅ {box_key} {slot_key}: {shiny_star}{pokemon_info['species']} (Lv. {pokemon_info['level']}) - {save_result}\n", 
+                                              "success")
+                        else:
+                            error_count += 1
+                            output_text.insert(tk.END, f"❌ Error in {box_key} {slot_key}: {error}\n", "error")
+                        output_text.see(tk.END)
+                        
+                        # Update progress bar if provided
+                        if progress_var and total_possible > 0:
+                            progress_var.set((processed_count / total_possible) * 100)
+    
+    elif box_structure == "pc_boxes_direct":
+        # Process pc.Box0, pc.Box1, etc. structure
+        for box in range(30):
+            box_key = f'Box{box}'
+            if box_key in nbt_data['pc']:
+                for slot in range(30):
+                    slot_key = f'Slot{slot}'
+                    # Only process if the slot actually exists in the box
+                    if slot_key in nbt_data['pc'][box_key]:
+                        # Create a compound slot key in the format "Box{box} -> Slot{slot}"
+                        compound_slot_key = f"{box_key} -> {slot_key}"
+                        pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                        processed_count += 1
+                        if pokemon_info:
+                            pokemon_count += 1
+                            save_result = save_pokemon_to_json(pokemon_info)
+                            shiny_star = "⭐ " if pokemon_info['shiny'] else ""
+                            output_text.insert(tk.END, f"✅ {box_key} {slot_key}: {shiny_star}{pokemon_info['species']} (Lv. {pokemon_info['level']}) - {save_result}\n", 
+                                              "success")
+                        else:
+                            error_count += 1
+                            output_text.insert(tk.END, f"❌ Error in {box_key} {slot_key}: {error}\n", "error")
+                        output_text.see(tk.END)
+                        
+                        # Update progress bar if provided
+                        if progress_var and total_possible > 0:
+                            progress_var.set((processed_count / total_possible) * 100)
+    else:
+        # Unknown structure, try all possibilities for each box
+        for box in range(30):
+            box_key = f'Box{box}'
+            for slot in range(30):
+                slot_key = f'Slot{slot}'
+                compound_slot_key = f"{box_key} -> {slot_key}"
+                
+                # Try to extract data with our flexible function
+                pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                if pokemon_info:
+                    pokemon_count += 1
+                    save_result = save_pokemon_to_json(pokemon_info)
+                    shiny_star = "⭐ " if pokemon_info['shiny'] else ""
+                    output_text.insert(tk.END, f"✅ {box_key} {slot_key}: {shiny_star}{pokemon_info['species']} (Lv. {pokemon_info['level']}) - {save_result}\n", 
+                                      "success")
+                    output_text.see(tk.END)
+                    processed_count += 1
+                    
+                    # Update progress bar if provided
+                    if progress_var:
+                        progress_var.set((processed_count / (30 * 30)) * 100)  # Approximate progress
+    
+    output_text.insert(tk.END, f"\n📊 Summary for {os.path.basename(file_path)}:\n", "heading")
+    output_text.insert(tk.END, f"✅ Successfully processed {pokemon_count} Pokémon\n", "success")
+    if error_count > 0:
+        output_text.insert(tk.END, f"❌ Encountered {error_count} errors\n", "error")
+    output_text.insert(tk.END, "──────────────────────────────────────\n\n")
+    output_text.see(tk.END)
+    
+    # Update status label if provided
+    if status_label:
+        status_label.config(text=f"Completed: {os.path.basename(file_path)}")
+    
+    # Reset progress bar to 100%
+    if progress_var:
+        progress_var.set(100)
+
+class CobblemonParserUI:
+    def __init__(self, root):
+        # Load the cache at the start
+        global uuid_cache
+        uuid_cache = load_cache()
+        
+        self.root = root
+        self.root.title("Cobblemon Parser")
+        self.root.geometry("900x700")
+        self.root.configure(bg=THEME_BACKGROUND)
+        self.root.minsize(800, 600)
+        
+        # Create custom fonts
+        self.title_font = font.Font(family="Helvetica", size=16, weight="bold")
+        self.heading_font = font.Font(family="Helvetica", size=12, weight="bold")
+        self.text_font = font.Font(family="Helvetica", size=10)
+        
+        # Configure styles
+        self.style = ttk.Style()
+        
+        # Configure TButton style
+        self.style.configure("TButton", 
+                            font=self.text_font,
+                            padding=10)
+                            
+        # Configure TFrame style
+        self.style.configure("TFrame", background=THEME_BACKGROUND)
+        
+        # Configure TLabel style
+        self.style.configure("TLabel", background=THEME_BACKGROUND, font=self.text_font)
+        
+        # Main layout
+        self.create_main_layout()
+        
+    def create_main_layout(self):
+        # Create main container frame
+        self.main_frame = ttk.Frame(self.root, style="TFrame")
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Add title
+        self.title_frame = ttk.Frame(self.main_frame, style="TFrame")
+        self.title_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        self.title_label = tk.Label(self.title_frame, text="Cobblemon Parser", 
+                                font=self.title_font, bg=THEME_BACKGROUND, fg=THEME_PRIMARY)
+        self.title_label.pack(side=tk.LEFT)
+        
+        # Create input section
+        self.input_frame = ttk.Frame(self.main_frame, style="TFrame")
+        self.input_frame.pack(fill=tk.X, pady=10)
+        
+        # Input section title
+        input_title = tk.Label(self.input_frame, text="Select Cobblemon .dat Files", 
+                           font=self.heading_font, bg=THEME_BACKGROUND, fg=THEME_TEXT_PRIMARY)
+        input_title.pack(anchor="w", pady=(0, 10))
+        
+        # File 1 selection frame
+        self.file_frame1 = ttk.Frame(self.input_frame, style="TFrame")
+        self.file_frame1.pack(fill=tk.X, pady=5)
+        
+        # File 1 label
+        tk.Label(self.file_frame1, text=".dat 1:", bg=THEME_BACKGROUND).pack(side=tk.LEFT, padx=5)
+        
+        # File 1 entry
+        self.file1_var = tk.StringVar()
+        self.file1_entry = ttk.Entry(self.file_frame1, textvariable=self.file1_var, width=50)
+        self.file1_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # File 1 browse button
+        ttk.Button(self.file_frame1, text="Browse...", command=self.browse_file1).pack(side=tk.LEFT, padx=5)
+        
+        # File 2 selection frame
+        self.file_frame2 = ttk.Frame(self.input_frame, style="TFrame")
+        self.file_frame2.pack(fill=tk.X, pady=5)
+        
+        # File 2 label
+        tk.Label(self.file_frame2, text=".dat 2:", bg=THEME_BACKGROUND).pack(side=tk.LEFT, padx=5)
+        
+        # File 2 entry
+        self.file2_var = tk.StringVar()
+        self.file2_entry = ttk.Entry(self.file_frame2, textvariable=self.file2_var, width=50)
+        self.file2_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # File 2 browse button
+        ttk.Button(self.file_frame2, text="Browse...", command=self.browse_file2).pack(side=tk.LEFT, padx=5)
+        
+        # Status and progress section
+        self.status_frame = ttk.Frame(self.input_frame, style="TFrame")
+        self.status_frame.pack(fill=tk.X, pady=(10, 5))
+        
+        # Status label
+        self.status_label = tk.Label(self.status_frame, text="Ready", bg=THEME_BACKGROUND)
+        self.status_label.pack(side=tk.LEFT, padx=5)
+        
+        # Progress bar
+        self.progress_var = tk.DoubleVar()
+        self.progress_bar = ttk.Progressbar(self.status_frame, variable=self.progress_var, 
+                                          length=100, mode='determinate')
+        self.progress_bar.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=True)
+        
+        # Process button frame
+        self.button_frame = ttk.Frame(self.input_frame, style="TFrame")
+        self.button_frame.pack(fill=tk.X, pady=(10, 15), anchor='e')
+        
+        # Process button
+        self.process_btn = ttk.Button(self.button_frame, text="Process Files", command=self.process_files)
+        self.process_btn.pack(side=tk.RIGHT)
+        
+        # Create output section title
+        output_title = tk.Label(self.main_frame, text="Processing Results", 
+                            font=self.heading_font, bg=THEME_BACKGROUND, fg=THEME_TEXT_PRIMARY)
+        output_title.pack(anchor="w", pady=(10, 5))
+        
+        # Output text frame
+        self.output_frame = ttk.Frame(self.main_frame, style="TFrame")
+        self.output_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+        
+        # Output text area
+        self.output_text = tk.Text(self.output_frame, wrap=tk.WORD, 
+                                 bg=THEME_SURFACE, 
+                                 fg=THEME_TEXT_PRIMARY,
+                                 font=self.text_font)
+        self.output_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
+        
+        # Add scrollbar to output text
+        scrollbar = ttk.Scrollbar(self.output_frame, command=self.output_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.output_text.config(yscrollcommand=scrollbar.set)
+        
+        # Configure text tags for styling
+        self.output_text.tag_configure("error", foreground=THEME_ERROR)
+        self.output_text.tag_configure("success", foreground=THEME_SUCCESS)
+        self.output_text.tag_configure("heading", font=self.heading_font, foreground=THEME_PRIMARY)
+        
+        # Welcome message
+        self.output_text.insert(tk.END, "Welcome to Cobblemon Parser!\n", "heading")
+        self.output_text.insert(tk.END, "Select one or two .dat files to process and click 'Process Files'.\n\n")
+        
+    def browse_file1(self):
+        file_path = select_file()
+        if file_path:
+            self.file1_var.set(file_path)
+            
+    def browse_file2(self):
+        file_path = select_file()
+        if file_path:
+            self.file2_var.set(file_path)
+            
+    def process_files(self):
+        # Clear output text
+        self.output_text.delete(1.0, tk.END)
+        
+        file1 = self.file1_var.get().strip()
+        file2 = self.file2_var.get().strip()
+        
+        if not file1 and not file2:
+            self.output_text.insert(tk.END, "Please select at least one .dat file to process.\n", "error")
+            return
+        
+        self.output_text.insert(tk.END, "Processing started...\n\n", "heading")
+        self.status_label.config(text="Processing...")
+        self.progress_var.set(0)
+        
+        # Use threading to avoid UI freezing
+        def process_thread():
+            # Process first file if provided
+            if file1:
+                process_file(file1, self.output_text, self.progress_var, self.status_label)
+            
+            # Process second file if provided
+            if file2:
+                process_file(file2, self.output_text, self.progress_var, self.status_label)
+                
+            # Save the cache at the end
+            save_cache()
+            
+            # Update UI on completion
+            self.output_text.insert(tk.END, "Processing complete! Cache saved.\n", "heading")
+            self.status_label.config(text="Ready")
+            self.progress_var.set(100)
+        
+        # Start the processing thread
+        threading.Thread(target=process_thread, daemon=True).start()
+
+def main():
+    # Parse command line arguments
+    args = parse_args()
+    
+    if args.cli and args.files:
+        # CLI mode - use the provided file path
+        file_path = args.files
+        print(f"Processing file in CLI mode: {file_path}")
+        
+        # Load cache
+        global uuid_cache
+        uuid_cache = load_cache()
+        
+        nbt_data = load_nbt(file_path)
+        
+        if not isinstance(nbt_data, tuple):  # No error
+            # Process party Pokémon
+            for i in range(6):
+                slot = f'Slot{i}'
+                if slot in nbt_data:
+                    pokemon_info, error = extract_pokemon_data(nbt_data, slot)
+                    if pokemon_info:
+                        print(f"Extracted Pokémon Data for {slot}:")
+                        for key, value in pokemon_info.items():
+                            print(f"{key}: {value}")
+                        save_pokemon_to_json(pokemon_info)
+                    else:
+                        print(f"Failed to extract Pokémon data for {slot}: {error}")
+            
+            # Check for different PC box structures
+            box_structure = "unknown"
+            if any(f'Box{i}' in nbt_data for i in range(30)):
+                # Traditional Box0, Box1, etc. structure
+                box_structure = "direct"
+            elif 'pc' in nbt_data:
+                if 'boxes' in nbt_data['pc'] and isinstance(nbt_data['pc']['boxes'], list):
+                    # Structure with pc.boxes array
+                    box_structure = "pc_boxes_array"
+                elif any(f'Box{i}' in nbt_data['pc'] for i in range(30)):
+                    # Structure with pc.Box0, pc.Box1, etc.
+                    box_structure = "pc_boxes_direct"
+            
+            print(f"Detected box structure: {box_structure}")
+            
+            # Process PC boxes based on detected structure
+            if box_structure == "direct":
+                # Process traditional Box0, Box1, etc. structure
+                for box in range(30):
+                    box_key = f'Box{box}'
+                    if box_key in nbt_data:
+                        for slot in range(30):
+                            slot_key = f'Slot{slot}'
+                            # Only process if the slot actually exists in the box
+                            if slot_key in nbt_data[box_key]:
+                                # Create a compound slot key in the format "Box{box} -> Slot{slot}"
+                                compound_slot_key = f"{box_key} -> {slot_key}"
+                                pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                                if pokemon_info:
+                                    print(f"Extracted Pokémon Data for {box_key} -> {slot_key}:")
+                                    for key, value in pokemon_info.items():
+                                        print(f"{key}: {value}")
+                                    save_pokemon_to_json(pokemon_info)
+                                else:
+                                    print(f"Failed to extract Pokémon data for {box_key} -> {slot_key}: {error}")
+            
+            elif box_structure == "pc_boxes_array":
+                # Process pc.boxes array structure
+                for box_idx, box in enumerate(nbt_data['pc']['boxes']):
+                    box_key = f'Box{box_idx}'
+                    if 'pokemon' in box and isinstance(box['pokemon'], list):
+                        for poke in box['pokemon']:
+                            if 'slot_number' in poke:
+                                slot_idx = poke['slot_number']
+                                slot_key = f'Slot{slot_idx}'
+                                compound_slot_key = f"{box_key} -> {slot_key}"
+                                pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                                if pokemon_info:
+                                    print(f"Extracted Pokémon Data for {box_key} -> {slot_key}:")
+                                    for key, value in pokemon_info.items():
+                                        print(f"{key}: {value}")
+                                    save_pokemon_to_json(pokemon_info)
+                                else:
+                                    print(f"Failed to extract Pokémon data for {box_key} -> {slot_key}: {error}")
+            
+            elif box_structure == "pc_boxes_direct":
+                # Process pc.Box0, pc.Box1, etc. structure
+                for box in range(30):
+                    box_key = f'Box{box}'
+                    if box_key in nbt_data['pc']:
+                        for slot in range(30):
+                            slot_key = f'Slot{slot}'
+                            # Only process if the slot actually exists in the box
+                            if slot_key in nbt_data['pc'][box_key]:
+                                # Create a compound slot key in the format "Box{box} -> Slot{slot}"
+                                compound_slot_key = f"{box_key} -> {slot_key}"
+                                pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                                if pokemon_info:
+                                    print(f"Extracted Pokémon Data for {box_key} -> {slot_key}:")
+                                    for key, value in pokemon_info.items():
+                                        print(f"{key}: {value}")
+                                    save_pokemon_to_json(pokemon_info)
+                                else:
+                                    print(f"Failed to extract Pokémon data for {box_key} -> {slot_key}: {error}")
+            else:
+                # Unknown structure, try all possibilities for each box
+                print("Unknown box structure, trying all possibilities...")
+                for box in range(30):
+                    box_key = f'Box{box}'
+                    for slot in range(30):
+                        slot_key = f'Slot{slot}'
+                        compound_slot_key = f"{box_key} -> {slot_key}"
+                        
+                        # Try to extract data with our flexible function
+                        pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
                         if pokemon_info:
                             print(f"Extracted Pokémon Data for {box_key} -> {slot_key}:")
                             for key, value in pokemon_info.items():
                                 print(f"{key}: {value}")
                             save_pokemon_to_json(pokemon_info)
-                        else:
-                            print(f"Failed to extract Pokémon data for {box_key} -> {slot_key}.")
+        else:
+            print(f"Failed to load NBT file: {nbt_data[1]}")
+        
+        # Save the cache at the end
+        save_cache()
     else:
-        print("Failed to load NBT file.")
-
-    # Save the cache at the end of the script
-    save_cache()
+        # GUI mode - create and run the application
+        try:
+            # Set app theme
+            root = tk.Tk()
+            root.configure(bg=THEME_BACKGROUND)
+            
+            # Create and run app
+            app = CobblemonParserUI(root)
+            root.mainloop()
+        except Exception as e:
+            print(f"Error starting GUI mode: {e}")
+            print("Falling back to simple file selection.")
+            
+            # Create a simple Tkinter dialog to select a file
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Error", f"Failed to start GUI mode: {e}\nFalling back to file selection dialog.")
+            file_path = filedialog.askopenfilename(title="Select Cobblemon .dat file", filetypes=[("DAT Files", "*.dat")])
+            
+            if file_path:
+                # Process the file using the simplified approach
+                uuid_cache = load_cache()
+                nbt_data = load_nbt(file_path)
+                
+                if not isinstance(nbt_data, tuple):
+                    # Process party Pokémon
+                    for i in range(6):
+                        slot = f'Slot{i}'
+                        if slot in nbt_data:
+                            pokemon_info, error = extract_pokemon_data(nbt_data, slot)
+                            if pokemon_info:
+                                save_pokemon_to_json(pokemon_info)
+                                print(f"Processed {pokemon_info['species']} (Level {pokemon_info['level']})")
+                    
+                    # Check for different PC box structures
+                    box_structure = "unknown"
+                    if any(f'Box{i}' in nbt_data for i in range(30)):
+                        # Traditional Box0, Box1, etc. structure
+                        box_structure = "direct"
+                        for box in range(30):
+                            box_key = f'Box{box}'
+                            if box_key in nbt_data:
+                                for slot in range(30):
+                                    slot_key = f'Slot{slot}'
+                                    # Only process if the slot actually exists in the box
+                                    if slot_key in nbt_data[box_key]:
+                                        # Create a compound slot key
+                                        compound_slot_key = f"{box_key} -> {slot_key}"
+                                        pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                                        if pokemon_info:
+                                            save_pokemon_to_json(pokemon_info)
+                                            print(f"Processed {pokemon_info['species']} (Level {pokemon_info['level']})")
+                    elif 'pc' in nbt_data:
+                        print(f"Detected PC structure, checking format...")
+                        # Try other structures with the same approach as in CLI mode
+                        if 'boxes' in nbt_data['pc'] and isinstance(nbt_data['pc']['boxes'], list):
+                            box_structure = "pc_boxes_array"
+                            # Process the same way as in CLI mode
+                            for box_idx, box in enumerate(nbt_data['pc']['boxes']):
+                                if 'pokemon' in box and isinstance(box['pokemon'], list):
+                                    for poke in box['pokemon']:
+                                        if 'slot_number' in poke:
+                                            slot_idx = poke['slot_number']
+                                            box_key = f'Box{box_idx}'
+                                            slot_key = f'Slot{slot_idx}'
+                                            compound_slot_key = f"{box_key} -> {slot_key}"
+                                            pokemon_info, error = extract_pokemon_data(nbt_data, compound_slot_key)
+                                            if pokemon_info:
+                                                save_pokemon_to_json(pokemon_info)
+                                                print(f"Processed {pokemon_info['species']} (Level {pokemon_info['level']})")
+                    
+                    # Save the cache
+                    save_cache()
+                    messagebox.showinfo("Success", "Processing complete! Check the console for details.")
+                else:
+                    messagebox.showerror("Error", f"Failed to load NBT file: {nbt_data[1]}")
+            else:
+                print("No file selected. Exiting.")
 
 if __name__ == "__main__":
     main()

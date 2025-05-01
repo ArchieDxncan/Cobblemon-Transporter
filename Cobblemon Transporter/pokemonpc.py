@@ -13,7 +13,7 @@ import sys
 GRID_ROWS = 5
 GRID_COLS = 6
 BOX_SIZE = GRID_ROWS * GRID_COLS  # 30 slots per box
-TOTAL_BOXES = 8  # Number of boxes per grid
+TOTAL_BOXES = 30  # Number of boxes per grid
 COBBLEMON_FOLDER = "cobblemon"  # Path to the folder where Cobblemon JSON files are stored
 SPRITES_FOLDER = "sprites/regular"  # Path to the folder where Pokémon sprites are stored
 SHINY_SPRITES_FOLDER = "sprites/shiny"  # Path to the folder where Shiny Pokémon sprites are stored
@@ -179,41 +179,99 @@ class PokemonHomeApp:
 
     def on_drop(self, event):
         """Handle dropped files."""
-        # Use regex to properly extract file paths including those with spaces.
-        file_paths = re.findall(r'\{.*?\}|\S+', event.data)
+        try:
+            # Use regex to properly extract file paths including those with spaces.
+            file_paths = re.findall(r'\{.*?\}|\S+', event.data)
 
-        # Remove surrounding braces from paths like {C:\Some Folder\file.pk9}
-        file_paths = [path.strip("{}") for path in file_paths]
+            # Remove surrounding braces from paths like {C:\Some Folder\file.pk9}
+            file_paths = [path.strip("{}") for path in file_paths]
 
-        # Supported file extensions
-        supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8', '.dat'}
+            # Supported file extensions
+            supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8', '.dat'}
+            processed_count = 0
+            error_count = 0
 
-        # Then in the same method, add a condition to handle .dat files differently
-        for file_path in file_paths:
-            if file_path.lower().endswith('.dat'):
-                self.process_dat_file(file_path)
-                self.update_status(f"Processed: {os.path.basename(file_path)}")
-            elif any(file_path.lower().endswith(ext) for ext in supported_extensions):
-                self.convert_file_to_json(file_path)
-                self.update_status(f"Imported: {os.path.basename(file_path)}")
-            else:
-                messagebox.showwarning("Unsupported File", f"{file_path} is not a supported file type (.pk9, .cb9, .pb8, .pk8, .dat).")
-                self.update_status("Import failed: Unsupported file type")
+            for file_path in file_paths:
+                file_ext = os.path.splitext(file_path.lower())[1]
+                
+                if not os.path.exists(file_path):
+                    messagebox.showwarning("File Not Found", f"Cannot find file: {file_path}")
+                    self.update_status(f"Error: File not found - {os.path.basename(file_path)}")
+                    error_count += 1
+                    continue
+                    
+                if file_ext == '.dat':
+                    self.update_status(f"Processing DAT file: {os.path.basename(file_path)}")
+                    self.process_dat_file(file_path)
+                    processed_count += 1
+                elif file_ext in supported_extensions:
+                    self.update_status(f"Converting file: {os.path.basename(file_path)}")
+                    self.convert_file_to_json(file_path)
+                    processed_count += 1
+                else:
+                    messagebox.showwarning(
+                        "Unsupported File", 
+                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pb8, .pk8, .dat)."
+                    )
+                    self.update_status(f"Import failed: Unsupported file type - {os.path.basename(file_path)}")
+                    error_count += 1
 
+            # Final status update
+            if processed_count > 0 and error_count == 0:
+                self.update_status(f"Successfully processed {processed_count} file(s)")
+            elif processed_count > 0 and error_count > 0:
+                self.update_status(f"Processed {processed_count} file(s) with {error_count} error(s)")
+            elif error_count > 0:
+                self.update_status(f"Failed to process any files: {error_count} error(s)")
+                
+        except Exception as e:
+            error_msg = f"Error handling dropped files: {str(e)}"
+            messagebox.showerror("Error", error_msg)
+            self.update_status(f"Error: {error_msg}")
+            print(f"Exception details: {e}")
 
     def process_dat_file(self, file_path):
         """Run parser.py on a dropped .dat file."""
         try:
             self.update_status(f"Processing DAT file: {os.path.basename(file_path)}")
+            
+            # Get the current script directory
+            current_directory = os.path.dirname(os.path.abspath(__file__))
+            parser_script = os.path.join(current_directory, "parser.py")
+            
+            # Check if parser.py exists
+            if not os.path.exists(parser_script):
+                messagebox.showerror("Error", f"Parser script not found at: {parser_script}")
+                self.update_status("Error: Parser script not found")
+                return
+                
             # Run parser.py with the DAT file path as an argument
-            subprocess.run(["python", "parser.py", "--cli", "--files", file_path], check=True)
+            process = subprocess.run(
+                [sys.executable, parser_script, "--cli", "--files", file_path], 
+                check=False,
+                capture_output=True,
+                text=True
+            )
+            
+            # Check if the process executed successfully
+            if process.returncode != 0:
+                error_msg = f"Parser script returned error code {process.returncode}:\n{process.stderr}"
+                messagebox.showerror("Error", error_msg)
+                self.update_status(f"Error processing DAT file: {os.path.basename(file_path)}")
+                print(f"Error output: {process.stderr}")
+                return
+                
+            # Show output in console for debugging
+            print(f"Parser output: {process.stdout}")
             
             # Reload the Pokémon data to display the newly converted Pokémon
             self.load_pokemon_data()
             self.update_status(f"Successfully processed {os.path.basename(file_path)}")
-        except subprocess.CalledProcessError as e:
-            messagebox.showerror("Error", f"Failed to process DAT file: {e}")
-            self.update_status(f"Error: Failed to process DAT file: {str(e)}")
+        except Exception as e:
+            error_msg = f"Failed to process DAT file: {str(e)}"
+            messagebox.showerror("Error", error_msg)
+            self.update_status(f"Error: {error_msg}")
+            print(f"Exception details: {e}")
 
     def convert_pk9_to_json(self, file_path):
         """Convert a .pk9 file to JSON using the PB8ToJson.py script."""
