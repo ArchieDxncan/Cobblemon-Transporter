@@ -8,17 +8,17 @@
     ".NETCoreApp,Version=v9.0": {
       "PB8ToJson/1.0.0": {
         "dependencies": {
-          "PKHeX.Core": "24.11.12"
+          "PKHeX.Core": "25.2.23"
         },
         "runtime": {
           "PB8ToJson.dll": {}
         }
       },
-      "PKHeX.Core/24.11.12": {
+      "PKHeX.Core/25.2.23": {
         "runtime": {
           "lib/net9.0/PKHeX.Core.dll": {
-            "assemblyVersion": "24.11.11.0",
-            "fileVersion": "24.11.11.0"
+            "assemblyVersion": "25.2.23.0",
+            "fileVersion": "25.2.23.0"
           }
         }
       }
@@ -30,12 +30,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "PKHeX.Core/24.11.12": {
+    "PKHeX.Core/25.2.23": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-XCIYnEYe6Z7XZk9rkSg302U4NW/AwW5VeSBzf966MsYqz5zbIqc16qdmx538tYoQkL8BeRqpCcWOfbrNvbgrXw==",
-      "path": "pkhex.core/24.11.12",
-      "hashPath": "pkhex.core.24.11.12.nupkg.sha512"
+      "sha512": "sha512-8IOw/lPLCM/BREk4LG948/6wAoTctgLW6luIMseVopPPpdOLPnDHAIh4qAQU1lS7MbMSKb1vLe2lWkORVfUB8A==",
+      "path": "pkhex.core/25.2.23",
+      "hashPath": "pkhex.core.25.2.23.nupkg.sha512"
     }
   }
 }

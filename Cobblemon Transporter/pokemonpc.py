@@ -138,12 +138,17 @@ class PokemonHomeApp:
         self.style.configure('Nav.TButton', background=COLORS["secondary"], foreground=COLORS["text"], 
                             padding=5, width=3, font=('Roboto', 10, 'bold'))
         
-        # Configure convert button style
-        self.style.configure('Convert.TButton', background=COLORS["accent"], foreground=COLORS["text"],
+        # Configure Pokemon button style - RED with white text
+        self.style.configure('Pokemon.TButton', background="#E74C3C", foreground="white",
                             padding=8, font=('Roboto', 10, 'bold'))
+        self.style.map('Pokemon.TButton', background=[('active', "#C0392B")])  # Darker red on hover
         
         # Configure showdown button style
         self.style.configure('Showdown.TButton', background="#4C6EF5", foreground="white",
+                            padding=8, font=('Roboto', 10, 'bold'))
+                            
+        # Configure Cobblemon button style
+        self.style.configure('Cobblemon.TButton', background="#66BB6A", foreground="white",
                             padding=8, font=('Roboto', 10, 'bold'))
 
     def create_header(self):
@@ -187,7 +192,24 @@ class PokemonHomeApp:
             file_paths = [path.strip("{}") for path in file_paths]
 
             # Supported file extensions
-            supported_extensions = {'.pk9', '.cb9', '.pb8', '.pk8', '.dat'}
+            supported_extensions = {
+                # Gen 9
+                '.pk9', '.cb9', 
+                # Gen 8
+                '.pb8', '.pk8', 
+                # Gen 7
+                '.pk7', '.pb7',
+                # Gen 6
+                '.pk6',
+                # Gen 5
+                '.pk5',
+                # Gen 4
+                '.pk4',
+                # Gen 3
+                '.pk3',
+                # Other
+                '.dat'
+            }
             processed_count = 0
             error_count = 0
 
@@ -454,6 +476,41 @@ class PokemonHomeApp:
                                     relief=tk.SOLID, padx=2, pady=2)
         self.details_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
         
+        # Add buttons frame at the bottom first to ensure it's always visible
+        buttons_frame = tk.Frame(self.details_frame, bg=COLORS["background"], pady=10, height=50)
+        buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        # Force the buttons frame to maintain its size
+        buttons_frame.pack_propagate(False)
+        
+        # Create an inner frame to center the buttons
+        buttons_inner_frame = tk.Frame(buttons_frame, bg=COLORS["background"])
+        buttons_inner_frame.pack(side=tk.TOP, fill=tk.X)
+        buttons_inner_frame.columnconfigure(0, weight=1)  # Left padding
+        buttons_inner_frame.columnconfigure(1, weight=0)  # First button
+        buttons_inner_frame.columnconfigure(2, weight=0)  # Second button
+        buttons_inner_frame.columnconfigure(3, weight=0)  # Third button
+        buttons_inner_frame.columnconfigure(4, weight=1)  # Right padding
+
+        # "Showdown" button with blue styling
+        self.showdown_button = ttk.Button(buttons_inner_frame, text="Showdown", style="Showdown.TButton",
+                                      command=self.export_to_showdown)
+        self.showdown_button.grid(row=0, column=1, padx=5)
+        
+        # "Cobblemon" button with green styling
+        self.cobblemon_button = ttk.Button(buttons_inner_frame, text="Cobblemon", style="Cobblemon.TButton",
+                                      command=self.export_to_cobblemon)
+        self.cobblemon_button.grid(row=0, column=2, padx=5)
+        
+        # "Pokémon" button (renamed from "Convert to .cb9")
+        self.convert_button = ttk.Button(buttons_inner_frame, text="Pokémon", style="Pokemon.TButton", 
+                                      command=self.export_to_pokemon)
+        self.convert_button.grid(row=0, column=3, padx=5)
+        
+        # Initially hide the buttons
+        self.showdown_button.grid_remove()
+        self.cobblemon_button.grid_remove()
+        self.convert_button.grid_remove()
+        
         # Inner frame with padding
         inner_details = tk.Frame(self.details_frame, bg=COLORS["background"], padx=15, pady=15)
         inner_details.pack(fill=tk.BOTH, expand=True)
@@ -496,24 +553,6 @@ class PokemonHomeApp:
         self.default_message = ttk.Label(scrollable_frame, text="Select a Pokémon to view details", 
                                       font=("Roboto", 11), foreground="#888888")
         self.default_message.pack(pady=50)
-        
-        # Add buttons frame at the bottom
-        buttons_frame = tk.Frame(self.details_frame, bg=COLORS["background"], pady=10)
-        buttons_frame.pack(fill=tk.X, side=tk.BOTTOM)
-
-        # "Export to Showdown" button with blue styling
-        self.showdown_button = ttk.Button(buttons_frame, text="Export to Showdown", style="Showdown.TButton",
-                                      command=self.export_to_showdown)
-        self.showdown_button.pack(side=tk.LEFT, padx=5)
-        
-        # "Convert to .cb9" button with improved styling
-        self.convert_button = ttk.Button(buttons_frame, text="Convert to .cb9", style="Convert.TButton", 
-                                      command=self.convert_to_pb8)
-        self.convert_button.pack(side=tk.RIGHT, padx=5)
-        
-        # Initially hide the buttons
-        self.showdown_button.pack_forget()
-        self.convert_button.pack_forget()
 
     def create_status_bar(self):
         """Create a status bar at the bottom of the application."""
@@ -714,8 +753,9 @@ class PokemonHomeApp:
             self.create_origin_tab(pokemon)
             
             # Show the buttons
-            self.showdown_button.pack(side=tk.LEFT, padx=5)
-            self.convert_button.pack(side=tk.RIGHT, padx=5)
+            self.showdown_button.grid(row=0, column=1, padx=5)
+            self.cobblemon_button.grid(row=0, column=2, padx=5)
+            self.convert_button.grid(row=0, column=3, padx=5)
             
             # Update status
             self.update_status(f"Selected: {pokemon['species']} (Level {pokemon['level']})")
@@ -755,8 +795,9 @@ class PokemonHomeApp:
             self.default_message.pack(pady=50)
             
             # Hide the buttons
-            self.showdown_button.pack_forget()
-            self.convert_button.pack_forget()
+            self.showdown_button.grid_remove()
+            self.cobblemon_button.grid_remove()
+            self.convert_button.grid_remove()
             
             # Update status
             self.update_status("No Pokémon selected")
@@ -1062,7 +1103,7 @@ class PokemonHomeApp:
                 separator = ttk.Separator(move_frame, orient='horizontal')
                 separator.pack(fill=tk.X, pady=5)
 
-    def convert_to_pb8(self):
+    def export_to_pokemon(self):
         """Convert the selected Pokémon's JSON file to .cb9 using the external .exe."""
         if self.selected_pokemon is None:
             messagebox.showerror("Error", "No Pokémon selected!")
@@ -1469,7 +1510,8 @@ class PokemonHomeApp:
             # We'll also need to keep track of the original appearance
             canvas = button.master  # Get the canvas that contains the button
             button.bind("<Enter>", lambda e, btn=button, c=canvas: self.on_button_enter(e, btn, c))
-            button.bind("<Leave>", lambda e, btn=button, c=canvas, idx=i: self.on_button_leave(e, btn, c, idx))
+            button.bind("<Leave>", lambda e, btn=button, c=canvas, idx=i: 
+                      self.on_button_leave(e, btn, c, idx))
 
     def start_drag(self, event, idx):
         """Start dragging a Pokémon with right-click."""
@@ -1920,6 +1962,82 @@ class PokemonHomeApp:
                 ttk.Label(technical_frame, text="Secret ID:", font=("Roboto", 10, "bold")).grid(row=row, column=0, sticky=tk.W, pady=3)
                 ttk.Label(technical_frame, text=str(pokemon['sid'])).grid(row=row, column=1, sticky=tk.W, padx=(10, 30))
                 row += 1
+
+    def export_to_cobblemon(self):
+        """Export the selected Pokémon to Cobblemon format using unparser.py."""
+        if self.selected_pokemon is None:
+            messagebox.showerror("Error", "No Pokémon selected!")
+            self.update_status("Error: No Pokémon selected")
+            return
+
+        try:
+            # Check if the file exists
+            if 'file_path' not in self.selected_pokemon or not os.path.exists(self.selected_pokemon['file_path']):
+                messagebox.showerror("Error", f"JSON file for {self.selected_pokemon['species']} not found!")
+                self.update_status(f"Error: JSON file not found for {self.selected_pokemon['species']}")
+                return
+
+            # Get directory of the current script
+            current_directory = os.path.dirname(os.path.abspath(__file__))
+            unparser_script = os.path.join(current_directory, "unparser.py")
+            
+            # Check if unparser.py exists
+            if not os.path.exists(unparser_script):
+                messagebox.showerror("Error", f"Unparser script not found at: {unparser_script}")
+                self.update_status("Error: Unparser script not found")
+                return
+            
+            # Update status before execution
+            self.update_status(f"Exporting {self.selected_pokemon['species']} to Cobblemon...")
+            
+            # Set up a proper environment for the subprocess with UTF-8 encoding
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            
+            # Run unparser.py with the CLI argument for the JSON file
+            process = subprocess.run(
+                [sys.executable, unparser_script, "--json", self.selected_pokemon['file_path']],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='backslashreplace',
+                env=env
+            )
+            
+            # Output the result to console for debugging
+            print(f"Unparser output: {process.stdout}")
+            print(f"Unparser errors: {process.stderr}")
+            
+            # Check process return code first
+            if process.returncode != 0:
+                if process.stderr and "UnicodeEncodeError" in process.stderr:
+                    # Specific error handling for encoding issues
+                    messagebox.showerror("Error", 
+                        "Encoding error occurred. The file path or Pokémon data contains special characters that "
+                        "cannot be processed correctly by the terminal.\n\n"
+                        "Please rename your Pokémon or move files to a path without special characters.")
+                    self.update_status(f"Error exporting: Encoding issue with special characters")
+                else:
+                    # General error handling
+                    messagebox.showerror("Error", f"Export failed with error:\n{process.stderr}")
+                    self.update_status("Error during Cobblemon export")
+                return
+            
+            # Check for success message in the output
+            if "Successfully processed" in process.stdout:
+                messagebox.showinfo("Success", f"Successfully exported {self.selected_pokemon['species']} to Cobblemon!")
+                self.update_status(f"Successfully exported {self.selected_pokemon['species']} to Cobblemon")
+            else:
+                # If no explicit success message but process completed, show info
+                messagebox.showinfo("Information", f"Export process completed with message:\n{process.stdout.strip()}")
+                self.update_status("Cobblemon export process completed")
+            
+        except Exception as e:
+            error_msg = f"Failed to export to Cobblemon: {str(e)}"
+            messagebox.showerror("Error", error_msg)
+            self.update_status(f"Error: {error_msg}")
+            print(f"Exception details: {e}")
 
 
 

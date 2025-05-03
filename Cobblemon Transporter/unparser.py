@@ -5,9 +5,32 @@ import tkinter as tk
 import random
 from tkinter import filedialog, messagebox
 import copy
+import sys
+import argparse
+import io
+
+# Set up the console to handle Unicode properly
+if sys.platform.startswith('win'):
+    # On Windows, try to set the console to use UTF-8
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleOutputCP(65001)  # 65001 is the code page for UTF-8
+    except Exception:
+        # If setting the console code page fails, redirect stdout to handle Unicode safely
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='backslashreplace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='backslashreplace')
 
 # Directory for JSON files
 JSON_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cobblemon')
+
+def safe_print(text):
+    """Print text with safe encoding handling."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Fall back to printing with escape characters if direct printing fails
+        print(text.encode('ascii', errors='backslashreplace').decode('ascii'))
 
 def select_json_files():
     root = tk.Tk()
@@ -15,12 +38,12 @@ def select_json_files():
 
     response = messagebox.askyesno("Export to Cobblemon?", "Ensure you have a Pokemon in your party/boxes.")
     if not response:
-        print("Export canceled.")
+        safe_print("Export canceled.")
         return None
     
     file_paths = filedialog.askopenfilenames(title="Select Cobblemon JSON file", filetypes=[("JSON Files", "*.json")], initialdir=JSON_DIR)
     if not file_paths:
-        print("No files selected. Exiting.")
+        safe_print("No files selected. Exiting.")
         return None
     
     return file_paths
@@ -31,17 +54,17 @@ def select_dat_file():
 
     file_path = filedialog.askopenfilename(title="Select Cobblemon .dat file", filetypes=[("DAT Files", "*.dat")])
     if not file_path:
-        print("No file selected. Exiting.")
+        safe_print("No file selected. Exiting.")
         return None
     
     return file_path
 
 def load_json(file_path):
     try:
-        with open(file_path, 'r') as json_file:
+        with open(file_path, 'r', encoding='utf-8') as json_file:
             return json.load(json_file)
     except Exception as e:
-        print(f"Error loading JSON file {file_path}: {e}")
+        safe_print(f"Error loading JSON file {file_path}: {e}")
         return None
 
 def generate_uuid():
@@ -169,14 +192,14 @@ def merge_pokemon_data(existing_slot, new_data):
                 try:
                     # Try to append the move to the list
                     move_list.append(nbtlib.Compound(move_dict))
-                    print(f"Successfully added move {clean_move_name}")
+                    safe_print(f"Successfully added move {clean_move_name}")
                 except Exception as e:
-                    print(f"Error adding move: {e}")
+                    safe_print(f"Error adding move: {e}")
                     # Try fallback approach - add directly without wrapping in Compound
                     try:
                         move_list.append(move_dict)
                     except Exception as e2:
-                        print(f"Fallback also failed: {e2}")
+                        safe_print(f"Fallback also failed: {e2}")
         
         existing_slot['MoveSet'] = move_list
 
@@ -202,11 +225,15 @@ def merge_pokemon_data(existing_slot, new_data):
         existing_slot['GmaxFactor'] = nbtlib.Byte(new_data['gmax_factor'])
     if 'gmax_level' in new_data:
         existing_slot['DmaxLevel'] = nbtlib.Int(new_data['gmax_level'])
-    if 'tera_type' in new_data:
+    # Set tera_type with a default value of "cobblemon:normal" if not present or empty
+    if 'tera_type' in new_data and new_data['tera_type'].strip():
         tera_type_value = new_data['tera_type'].lower()
         if not tera_type_value.startswith("cobblemon:"):
             tera_type_value = "cobblemon:" + tera_type_value
         existing_slot['TeraType'] = nbtlib.String(tera_type_value)
+    else:
+        # Default to normal type if tera_type is missing or empty
+        existing_slot['TeraType'] = nbtlib.String("cobblemon:normal")
     if 'form_id' in new_data:
         existing_slot['FormId'] = nbtlib.String(new_data['form_id'])
     if 'uuid' in new_data:
@@ -278,44 +305,37 @@ def save_nbt_to_dat(nbt_data, file_path):
         existing_data = nbtlib.load(file_path) if os.path.exists(file_path) else nbtlib.File()
         existing_data.update(nbt_data)
         existing_data.save(file_path)
-        print(f"Saved NBT data to {file_path}")
+        safe_print(f"Saved NBT data to {file_path}")
     except Exception as e:
-        print(f"Error saving NBT file: {e}")
+        safe_print(f"Error saving NBT file: {e}")
 
-def main():
-    json_files = select_json_files()
-    if not json_files:
-        return
-
-    dat_file = select_dat_file()
-    if not dat_file:
-        return
-
+def process_files(json_files, dat_file):
+    """Process the JSON and DAT files"""
     # Load the existing NBT file
     try:
         nbt_data = nbtlib.load(dat_file)
     except Exception as e:
-        print(f"Error loading NBT file: {e}")
-        return
+        safe_print(f"Error loading NBT file: {e}")
+        return False
 
     # Detect the type of .dat file
     dat_type = detect_dat_type(nbt_data)
-    print(f"Detected .dat type: {dat_type}")
+    safe_print(f"Detected .dat type: {dat_type}")
 
     if dat_type == 'party':
         # Handle party data
         existing_slot_index, free_slot_indices = find_existing_pokemon_and_free_slots_party(nbt_data, len(json_files))
         
         if existing_slot_index is None:
-            print("No existing Pokémon found to duplicate in party.")
-            return
+            safe_print("No existing Pokémon found to duplicate in party.")
+            return False
         
         if len(free_slot_indices) < len(json_files):
-            print(f"Only {len(free_slot_indices)} free slots available in party, but {len(json_files)} JSON files were selected.")
-            return
+            safe_print(f"Only {len(free_slot_indices)} free slots available in party, but {len(json_files)} JSON files were selected.")
+            return False
         
-        print(f"Found existing Pokémon in party slot {existing_slot_index}")
-        print(f"Will duplicate to {len(free_slot_indices)} free slots: {free_slot_indices}")
+        safe_print(f"Found existing Pokémon in party slot {existing_slot_index}")
+        safe_print(f"Will duplicate to {len(free_slot_indices)} free slots: {free_slot_indices}")
 
         # Get the existing slot data
         existing_slot_key = f'Slot{existing_slot_index}'
@@ -339,25 +359,25 @@ def main():
                 # Merge the new data into the duplicated slot
                 duplicated_data = merge_pokemon_data(duplicated_data, pokemon_info)
                 nbt_data[free_slot_key] = duplicated_data
-                print(f"Processed Pokémon from {os.path.basename(json_file)} into party slot {free_slot_index}")
+                safe_print(f"Processed Pokémon from {os.path.basename(json_file)} into party slot {free_slot_index}")
             else:
-                print(f"Skipping invalid JSON file: {json_file}")
+                safe_print(f"Skipping invalid JSON file: {json_file}")
 
     elif dat_type == 'boxes':
         # Handle box data
         existing_location, free_locations = find_existing_pokemon_and_free_slots_boxes(nbt_data, len(json_files))
         
         if existing_location is None:
-            print("No existing Pokémon found to duplicate in boxes.")
-            return
+            safe_print("No existing Pokémon found to duplicate in boxes.")
+            return False
         
         if len(free_locations) < len(json_files):
-            print(f"Only {len(free_locations)} free slots available in boxes, but {len(json_files)} JSON files were selected.")
-            return
+            safe_print(f"Only {len(free_locations)} free slots available in boxes, but {len(json_files)} JSON files were selected.")
+            return False
         
         existing_box, existing_slot = existing_location
-        print(f"Found existing Pokémon in box {existing_box}, slot {existing_slot}")
-        print(f"Will duplicate to {len(free_locations)} free locations")
+        safe_print(f"Found existing Pokémon in box {existing_box}, slot {existing_slot}")
+        safe_print(f"Will duplicate to {len(free_locations)} free locations")
 
         # Get the existing slot data
         existing_box_key = f'Box{existing_box}'
@@ -387,17 +407,57 @@ def main():
                 # Merge the new data into the duplicated slot
                 duplicated_data = merge_pokemon_data(duplicated_data, pokemon_info)
                 nbt_data[free_box_key][free_slot_key] = duplicated_data
-                print(f"Processed Pokémon from {os.path.basename(json_file)} into box {free_box}, slot {free_slot}")
+                safe_print(f"Processed Pokémon from {os.path.basename(json_file)} into box {free_box}, slot {free_slot}")
             else:
-                print(f"Skipping invalid JSON file: {json_file}")
+                safe_print(f"Skipping invalid JSON file: {json_file}")
 
     else:
-        print("Unknown .dat file format. Cannot process.")
-        return
+        safe_print("Unknown .dat file format. Cannot process.")
+        return False
 
     # Save the modified NBT data
     save_nbt_to_dat(nbt_data, dat_file)
-    print(f"Successfully processed {len(json_files)} Pokémon")
+    safe_print(f"Successfully processed {len(json_files)} Pokémon")
+    return True
+
+def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Export Pokémon from JSON to Cobblemon DAT file')
+    parser.add_argument('--json', type=str, help='Path to a JSON file to export (CLI mode)')
+    args = parser.parse_args()
+    
+    # CLI mode
+    if args.json:
+        # Verify JSON file exists
+        if not os.path.exists(args.json):
+            safe_print(f"Error: JSON file not found: {args.json}")
+            return
+            
+        # Ask for DAT file
+        safe_print("JSON file selected - Please select a Cobblemon .dat file to export to.")
+        dat_file = select_dat_file()
+        if not dat_file:
+            return
+            
+        # Process the files
+        json_files = [args.json]
+        result = process_files(json_files, dat_file)
+        if result:
+            safe_print("Export completed successfully.")
+        else:
+            safe_print("Export failed.")
+        return
+    
+    # GUI mode (original behavior)
+    json_files = select_json_files()
+    if not json_files:
+        return
+
+    dat_file = select_dat_file()
+    if not dat_file:
+        return
+        
+    process_files(json_files, dat_file)
 
 if __name__ == "__main__":
     main()
