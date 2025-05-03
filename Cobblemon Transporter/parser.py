@@ -29,11 +29,15 @@ uuid_cache = {}
 CACHE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'uuid_cache.json')
 
+# Output directory
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cobblemon')
+
 # Parse command line arguments
 def parse_args():
     parser = argparse.ArgumentParser(description='Parse Cobblemon .dat files')
     parser.add_argument('--cli', action='store_true', help='Run in CLI mode without GUI dialogs')
     parser.add_argument('--files', type=str, help='Path to the .dat file to process')
+    parser.add_argument('--output', type=str, help='Output directory for the parsed files (default: "cobblemon" folder in script directory)')
     return parser.parse_args()
 
 def select_file():
@@ -412,12 +416,12 @@ def load_hyphen_moves():
 def find_available_box_slot():
     """Find an available box slot for a Pokémon by checking existing JSON files"""
     try:
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        cobblemon_dir = os.path.join(script_dir, 'cobblemon')
+        # Use the global output directory
+        global OUTPUT_DIR
         
         # Ensure the directory exists
-        if not os.path.exists(cobblemon_dir):
-            os.makedirs(cobblemon_dir, exist_ok=True)
+        if not os.path.exists(OUTPUT_DIR):
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
             # If directory was just created, first slot in first box is available
             return 1, 1
         
@@ -429,10 +433,10 @@ def find_available_box_slot():
         occupied_slots = set()
         
         # Parse all existing JSON files to find occupied slots
-        for filename in os.listdir(cobblemon_dir):
+        for filename in os.listdir(OUTPUT_DIR):
             if filename.endswith('.json'):
                 try:
-                    with open(os.path.join(cobblemon_dir, filename), 'r') as f:
+                    with open(os.path.join(OUTPUT_DIR, filename), 'r') as f:
                         pokemon_data = json.load(f)
                         if 'box_number' in pokemon_data and 'slot_number' in pokemon_data:
                             box_num = pokemon_data['box_number']
@@ -456,13 +460,11 @@ def find_available_box_slot():
 
 def save_pokemon_to_json(pokemon_info):
     if pokemon_info:
-        # Get the directory of the current script
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        # Define the cobblemon directory
-        cobblemon_dir = os.path.join(script_dir, 'cobblemon')
-
-        # Ensure the cobblemon directory exists
-        os.makedirs(cobblemon_dir, exist_ok=True)
+        # Get the output directory (use the global variable that may have been set via command line)
+        global OUTPUT_DIR
+        
+        # Ensure the output directory exists
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
 
         # Use existing box and slot if available, otherwise find available ones
         if 'box_number' in pokemon_info and 'slot_number' in pokemon_info:
@@ -475,7 +477,7 @@ def save_pokemon_to_json(pokemon_info):
             pokemon_info['slot_number'] = slot_num
 
         filename = generate_unique_filename(pokemon_info)
-        file_path = os.path.join(cobblemon_dir, filename)
+        file_path = os.path.join(OUTPUT_DIR, filename)
 
         # Save the Pokémon data to a JSON file
         with open(file_path, 'w') as json_file:
@@ -885,6 +887,12 @@ class CobblemonParserUI:
 def main():
     # Parse command line arguments
     args = parse_args()
+    
+    # Set the output directory if specified
+    global OUTPUT_DIR
+    if args.output:
+        OUTPUT_DIR = args.output
+        print(f"Using output directory: {OUTPUT_DIR}")
     
     if args.cli and args.files:
         # CLI mode - use the provided file path

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox, filedialog, simpledialog
 import json
 import os
 import subprocess
@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 from tkinterdnd2 import TkinterDnD, DND_FILES  # Import tkinterdnd2
 import re
 import sys
+import time
 
 # Constants
 GRID_ROWS = 5
@@ -29,7 +30,8 @@ COLORS = {
     "filled_slot": "#A9CCE8",     # Light blue for filled slots
     "shiny_slot": "#FFE6B3",      # Light gold for shiny Pokémon
     "button_hover": "#3A5573",    # Darker blue for hover
-    "separator": "#D1DEE9"        # Light grey for separators
+    "separator": "#D1DEE9",        # Light grey for separators
+    "dropdown_hover": "#EAF0F6"   # Light blue for dropdown hover
 }
 
 def create_rounded_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
@@ -181,6 +183,162 @@ class PokemonHomeApp:
         """Set up drag-and-drop functionality for .pk9 files."""
         self.root.drop_target_register(DND_FILES)
         self.root.dnd_bind('<<Drop>>', self.on_drop)
+        
+        # Also set up drag and drop for the grid itself
+        self.setup_drag_drop_for_grid()
+        
+    def setup_drag_drop_for_grid(self):
+        """Set up drag and drop for JSON files directly onto the grid."""
+        # Each button in the grid should accept drops
+        for i, button in enumerate(self.local_buttons):
+            button.drop_target_register(DND_FILES)
+            button.dnd_bind('<<Drop>>', lambda e, idx=i: self.on_grid_drop(e, idx))
+            
+            # Get the canvas that contains the button
+            canvas = button.master
+            canvas.drop_target_register(DND_FILES)
+            canvas.dnd_bind('<<Drop>>', lambda e, idx=i: self.on_grid_drop(e, idx))
+    
+    def on_grid_drop(self, event, slot_index):
+        """Handle files dropped directly onto a specific slot in the box."""
+        try:
+            # Use regex to properly extract file paths including those with spaces
+            file_paths = re.findall(r'\{.*?\}|\S+', event.data)
+            
+            # Remove surrounding braces from paths
+            file_paths = [path.strip("{}") for path in file_paths]
+            
+            # Supported file extensions
+            supported_extensions = {
+                '.pk9', '.cb9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json'
+            }
+            
+            for file_path in file_paths:
+                file_ext = os.path.splitext(file_path.lower())[1]
+                
+                if not os.path.exists(file_path):
+                    messagebox.showwarning("File Not Found", f"Cannot find file: {file_path}")
+                    continue
+                
+                # If it's a JSON file, handle it directly
+                if file_ext == '.json':
+                    self.place_json_in_slot(file_path, self.current_local_box, slot_index)
+                # Otherwise convert it first
+                elif file_ext in supported_extensions:
+                    # Convert the file to JSON
+                    if file_ext == '.dat':
+                        self.process_dat_file(file_path)
+                    else:
+                        self.convert_file_to_json_at_slot(file_path, slot_index)
+                else:
+                    messagebox.showwarning(
+                        "Unsupported File", 
+                        f"{os.path.basename(file_path)} is not a supported file type."
+                    )
+            
+            # Reload the Pokémon data to display changes
+            self.load_pokemon_data()
+            
+        except Exception as e:
+            error_msg = f"Error handling dropped files onto grid: {str(e)}"
+            messagebox.showerror("Error", error_msg)
+            self.update_status(f"Error: {error_msg}")
+            print(f"Exception details: {e}")
+    
+    def place_json_in_slot(self, json_path, box_index, slot_index):
+        """Place a JSON file directly into a specific slot."""
+        try:
+            # Check if the slot is already occupied
+            if self.local_storage[box_index][slot_index] is not None:
+                # Ask if the user wants to replace the Pokémon
+                pokemon_name = self.local_storage[box_index][slot_index]['species'].capitalize()
+                replace = messagebox.askyesno(
+                    "Replace Pokémon", 
+                    f"Slot {slot_index + 1} is already occupied by {pokemon_name}. Replace it?"
+                )
+                if not replace:
+                    return False
+            
+            # Load the JSON data
+            with open(json_path, 'r') as f:
+                pokemon_data = json.load(f)
+            
+            # Update the box and slot information
+            pokemon_data['box_number'] = box_index + 1  # 1-indexed for user clarity
+            pokemon_data['slot_number'] = slot_index + 1  # 1-indexed for user clarity
+            
+            # If the JSON is not in the current folder, copy it there
+            if not json_path.startswith(self.current_folder):
+                # Create a new filename based on the Pokémon species and a timestamp
+                species = pokemon_data.get('species', 'pokemon').lower()
+                timestamp = int(time.time())
+                new_filename = f"{species}_{timestamp}.json"
+                new_path = os.path.join(self.current_folder, new_filename)
+                
+                # Copy the file to the current folder
+                with open(new_path, 'w') as f:
+                    json.dump(pokemon_data, f, indent=4)
+                
+                # Update the file path for future reference
+                json_path = new_path
+            else:
+                # Save changes to the existing file
+                with open(json_path, 'w') as f:
+                    json.dump(pokemon_data, f, indent=4)
+            
+            # Update the local storage
+            pokemon_data['file_path'] = json_path
+            self.local_storage[box_index][slot_index] = pokemon_data
+            
+            self.update_status(f"Placed {pokemon_data['species']} in Box {box_index + 1}, Slot {slot_index + 1}")
+            return True
+            
+        except Exception as e:
+            error_msg = f"Error placing JSON in slot: {str(e)}"
+            messagebox.showerror("Error", error_msg)
+            self.update_status(f"Error: {error_msg}")
+            print(f"Exception details: {e}")
+            return False
+    
+    def convert_file_to_json_at_slot(self, file_path, slot_index):
+        """Convert a file to JSON and place it in a specific slot."""
+        # Get the current script directory
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+
+        # Locate PB8ToJson.exe in the same directory as this script
+        pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+        pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+
+        # Ensure the executable exists
+        if not os.path.isfile(pb8_to_json_exe):
+            self.update_status(f"Error: {pb8_to_json_exe} not found.")
+            return
+        
+        # Create the output directory if it doesn't exist
+        if not os.path.exists(self.current_folder):
+            os.makedirs(self.current_folder)
+        
+        # Run the executable with file path and output directory
+        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        
+        # Find the newly created JSON file
+        try:
+            # Get the base name of the original file without extension
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
+            
+            # Look for the corresponding JSON file
+            json_file_path = None
+            for file in os.listdir(self.current_folder):
+                if file.startswith(base_name) and file.endswith(".json"):
+                    json_file_path = os.path.join(self.current_folder, file)
+                    break
+            
+            # If found, place it in the specified slot
+            if json_file_path and os.path.exists(json_file_path):
+                self.place_json_in_slot(json_file_path, self.current_local_box, slot_index)
+        except Exception as e:
+            print(f"Error finding converted JSON file: {e}")
+            # Continue without placing if there's an error
 
     def on_drop(self, event):
         """Handle dropped files."""
@@ -246,6 +404,9 @@ class PokemonHomeApp:
             elif error_count > 0:
                 self.update_status(f"Failed to process any files: {error_count} error(s)")
                 
+            # Reload the Pokémon data to display newly converted Pokémon
+            self.load_pokemon_data()
+                
         except Exception as e:
             error_msg = f"Error handling dropped files: {str(e)}"
             messagebox.showerror("Error", error_msg)
@@ -268,8 +429,9 @@ class PokemonHomeApp:
                 return
                 
             # Run parser.py with the DAT file path as an argument
+            # Add the --output argument to specify the current folder
             process = subprocess.run(
-                [sys.executable, parser_script, "--cli", "--files", file_path], 
+                [sys.executable, parser_script, "--cli", "--files", file_path, "--output", self.current_folder], 
                 check=False,
                 capture_output=True,
                 text=True
@@ -286,6 +448,9 @@ class PokemonHomeApp:
             # Show output in console for debugging
             print(f"Parser output: {process.stdout}")
             
+            # Get the list of newly created JSON files and update their box/slot
+            self.update_json_files_box_slot()
+            
             # Reload the Pokémon data to display the newly converted Pokémon
             self.load_pokemon_data()
             self.update_status(f"Successfully processed {os.path.basename(file_path)}")
@@ -294,6 +459,68 @@ class PokemonHomeApp:
             messagebox.showerror("Error", error_msg)
             self.update_status(f"Error: {error_msg}")
             print(f"Exception details: {e}")
+            
+    def update_json_files_box_slot(self):
+        """Update all JSON files in the current folder to use the current box if they don't have box info yet."""
+        try:
+            if not os.path.exists(self.current_folder):
+                return
+                
+            # Get all existing Pokémon loaded in the storage to avoid duplicates
+            used_slots = set()
+            for box_idx in range(TOTAL_BOXES):
+                for slot_idx in range(BOX_SIZE):
+                    if self.local_storage[box_idx][slot_idx] is not None:
+                        used_slots.add((box_idx + 1, slot_idx + 1))  # 1-indexed for consistency with JSON files
+            
+            # Get list of JSON files in the folder
+            json_files = [f for f in os.listdir(self.current_folder) if f.endswith('.json')]
+            files_updated = 0
+            
+            # Start from the current box for placement
+            current_box = self.current_local_box
+            current_slot = 0
+            
+            for json_file in json_files:
+                json_path = os.path.join(self.current_folder, json_file)
+                
+                # Load the JSON data
+                with open(json_path, 'r') as f:
+                    pokemon_data = json.load(f)
+                
+                # Skip if this Pokémon already has box and slot assigned
+                if 'box_number' in pokemon_data and 'slot_number' in pokemon_data:
+                    box_slot = (pokemon_data['box_number'], pokemon_data['slot_number'])
+                    if box_slot in used_slots:
+                        continue
+                
+                # Find the next available slot
+                while True:
+                    if (current_box + 1, current_slot + 1) not in used_slots:
+                        # Found an empty slot
+                        pokemon_data['box_number'] = current_box + 1
+                        pokemon_data['slot_number'] = current_slot + 1
+                        
+                        # Add this slot to used slots
+                        used_slots.add((current_box + 1, current_slot + 1))
+                        
+                        # Save the updated JSON
+                        with open(json_path, 'w') as f:
+                            json.dump(pokemon_data, f, indent=4)
+                            
+                        files_updated += 1
+                        break
+                    
+                    # Move to the next slot
+                    current_slot += 1
+                    if current_slot >= BOX_SIZE:
+                        current_slot = 0
+                        current_box = (current_box + 1) % TOTAL_BOXES
+            
+            if files_updated > 0:
+                self.update_status(f"Updated {files_updated} Pokémon to be in the current box and folder")
+        except Exception as e:
+            print(f"Error updating JSON files box/slot: {e}")
 
     def convert_pk9_to_json(self, file_path):
         """Convert a .pk9 file to JSON using the PB8ToJson.py script."""
@@ -317,7 +544,51 @@ class PokemonHomeApp:
             self.update_status(f"Error: {pb8_to_json_exe} not found.")
             return
         
-        subprocess.run([pb8_to_json_exe, file_path])
+        # Create the output directory if it doesn't exist
+        if not os.path.exists(self.current_folder):
+            os.makedirs(self.current_folder)
+        
+        # Run the executable with file path and output directory
+        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        
+        # Find the newly created JSON file and modify its box/slot information
+        try:
+            # Get the base name of the original file without extension
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
+            
+            # Look for the corresponding JSON file
+            json_file_path = None
+            for file in os.listdir(self.current_folder):
+                if file.startswith(base_name) and file.endswith(".json"):
+                    json_file_path = os.path.join(self.current_folder, file)
+                    break
+                    
+            # If found, update the box and slot information
+            if json_file_path and os.path.exists(json_file_path):
+                with open(json_file_path, 'r') as f:
+                    pokemon_data = json.load(f)
+                
+                # Find the first empty slot in the current box
+                empty_slot = None
+                for slot_idx in range(BOX_SIZE):
+                    if self.local_storage[self.current_local_box][slot_idx] is None:
+                        empty_slot = slot_idx
+                        break
+                
+                # If empty slot found, update box and slot
+                if empty_slot is not None:
+                    pokemon_data['box_number'] = self.current_local_box + 1  # 1-indexed for user clarity
+                    pokemon_data['slot_number'] = empty_slot + 1  # 1-indexed for user clarity
+                    
+                    # Save the updated JSON
+                    with open(json_file_path, 'w') as f:
+                        json.dump(pokemon_data, f, indent=4)
+                    
+                    self.update_status(f"Placed {os.path.basename(json_file_path)} in Box {self.current_local_box + 1}, Slot {empty_slot + 1}")
+        except Exception as e:
+            print(f"Error updating box/slot for converted file: {e}")
+            # Continue without updating box/slot if there's an error
+        
         self.load_pokemon_data()
         self.update_status("Conversion completed successfully")
 
@@ -326,11 +597,35 @@ class PokemonHomeApp:
         left_frame = tk.Frame(self.content_frame, bg=COLORS["background"])
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
-        # Box title with decorative elements
+        # Box title with decorative elements and folder selector
         title_frame = tk.Frame(left_frame, bg=COLORS["background"])
         title_frame.pack(fill=tk.X, pady=(0, 10))
         
         ttk.Label(title_frame, text="Pokémon Storage", style="BoxTitle.TLabel").pack(side=tk.LEFT)
+        
+        # Add a folder selector dropdown
+        self.current_folder = COBBLEMON_FOLDER
+        self.folder_var = tk.StringVar(value=COBBLEMON_FOLDER)
+        
+        # Style the combobox
+        self.style.configure("Folder.TCombobox", 
+                           padding=5,
+                           background=COLORS["secondary"],
+                           fieldbackground=COLORS["background"])
+        
+        # Create and position the dropdown
+        self.folder_dropdown = ttk.Combobox(title_frame, 
+                                          textvariable=self.folder_var,
+                                          style="Folder.TCombobox",
+                                          state="readonly",
+                                          width=15)
+        self.folder_dropdown.pack(side=tk.RIGHT)
+        
+        # Populate the dropdown with available folders
+        self.update_folder_dropdown()
+        
+        # Bind the dropdown selection event
+        self.folder_dropdown.bind("<<ComboboxSelected>>", self.on_folder_selected)
         
         # Horizontal separator under the title
         separator = ttk.Separator(left_frame, orient='horizontal')
@@ -1144,23 +1439,23 @@ class PokemonHomeApp:
         return self.selected_pokemon
 
     def load_pokemon_data(self):
-        """Load all Pokémon data from JSON files in the 'cobblemon' folder."""
+        """Load all Pokémon data from JSON files in the selected folder."""
         try:
-            # Ensure the cobblemon directory exists
-            if not os.path.exists(COBBLEMON_FOLDER):
-                os.makedirs(COBBLEMON_FOLDER)
-                self.update_status(f"Created directory: {COBBLEMON_FOLDER}")
+            # Ensure the selected directory exists
+            if not os.path.exists(self.current_folder):
+                os.makedirs(self.current_folder)
+                self.update_status(f"Created directory: {self.current_folder}")
                 return
                 
             # Get all JSON files in the directory
-            files = [f for f in os.listdir(COBBLEMON_FOLDER) if f.endswith(".json")]
+            files = [f for f in os.listdir(self.current_folder) if f.endswith(".json")]
             
             if not files:
-                self.update_status("No Pokémon data found. Try importing some files.")
+                self.update_status(f"No Pokémon data found in {self.current_folder}. Try importing some files.")
                 return
                 
             # Sort files by modification date (oldest first)
-            files.sort(key=lambda x: os.path.getmtime(os.path.join(COBBLEMON_FOLDER, x)))
+            files.sort(key=lambda x: os.path.getmtime(os.path.join(self.current_folder, x)))
             
             # Clear existing storage first
             self.local_storage = [[None] * BOX_SIZE for _ in range(TOTAL_BOXES)]
@@ -1171,7 +1466,7 @@ class PokemonHomeApp:
             # Load Pokémon data
             pokemon_data = []
             for file in files:
-                file_path = os.path.join(COBBLEMON_FOLDER, file)
+                file_path = os.path.join(self.current_folder, file)
                 with open(file_path, "r") as f:
                     pokemon = json.load(f)
                     # Store the file path with the Pokémon data (but don't save to JSON)
@@ -1202,10 +1497,16 @@ class PokemonHomeApp:
                         # No box/slot info - add to the end
                         pokemon_data.append(pokemon)
             
-            # Place remaining Pokémon in empty slots
+            # Place remaining Pokémon in empty slots, starting with the current box
             for pokemon in pokemon_data:
                 placed = False
-                for box_index in range(TOTAL_BOXES):
+                
+                # Start with the current box, then try other boxes
+                box_order = list(range(TOTAL_BOXES))
+                box_order.remove(self.current_local_box)
+                box_order.insert(0, self.current_local_box)
+                
+                for box_index in box_order:
                     if placed:
                         break
                     for slot_index in range(BOX_SIZE):
@@ -1229,7 +1530,7 @@ class PokemonHomeApp:
             
             # Count total Pokémon
             total_loaded = sum(1 for box in self.local_storage for slot in box if slot is not None)
-            self.update_status(f"Loaded {total_loaded} Pokémon across {min(total_loaded // BOX_SIZE + 1, TOTAL_BOXES)} boxes")
+            self.update_status(f"Loaded {total_loaded} Pokémon from {self.current_folder} across {min(total_loaded // BOX_SIZE + 1, TOTAL_BOXES)} boxes")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load Pokémon data: {e}")
             self.update_status(f"Error loading Pokémon data: {str(e)}")
@@ -1328,6 +1629,7 @@ class PokemonHomeApp:
 
         file_menu.add_command(label="Load Pokémon Data", command=self.load_pokemon_data, 
                             accelerator="Ctrl+R")
+        file_menu.add_command(label="Create New Folder", command=self.create_new_folder)
         file_menu.add_separator()
         file_menu.add_command(label="Export to Cobblemon", command=self.run_export_script)
         file_menu.add_command(label="Export to Pokémon", command=self.mass_convert_to_pb8)
@@ -2038,6 +2340,73 @@ class PokemonHomeApp:
             messagebox.showerror("Error", error_msg)
             self.update_status(f"Error: {error_msg}")
             print(f"Exception details: {e}")
+
+    def update_folder_dropdown(self):
+        """Update the folder dropdown with available subfolders."""
+        folders = [COBBLEMON_FOLDER]  # Always include the main folder
+        
+        # Check if the main COBBLEMON_FOLDER exists
+        if os.path.exists(COBBLEMON_FOLDER):
+            # Get all subdirectories
+            for item in os.listdir(COBBLEMON_FOLDER):
+                full_path = os.path.join(COBBLEMON_FOLDER, item)
+                if os.path.isdir(full_path):
+                    folders.append(os.path.join(COBBLEMON_FOLDER, item))
+        
+        # Update the dropdown values
+        self.folder_dropdown['values'] = folders
+        
+        # If the current folder isn't in the list, reset to the main folder
+        if self.current_folder not in folders:
+            self.folder_var.set(COBBLEMON_FOLDER)
+            self.current_folder = COBBLEMON_FOLDER
+
+    def on_folder_selected(self, event):
+        """Handle folder selection from the dropdown."""
+        selected_folder = self.folder_var.get()
+        if selected_folder and selected_folder != self.current_folder:
+            self.current_folder = selected_folder
+            self.update_status(f"Loading Pokémon from folder: {selected_folder}")
+            self.load_pokemon_data()
+
+    def create_new_folder(self):
+        """Create a new subfolder in the Cobblemon folder."""
+        # Prompt the user for a folder name
+        folder_name = simpledialog.askstring("Create Folder", "Enter new folder name:")
+        
+        # Validate folder name
+        if not folder_name:
+            return
+            
+        # Remove any invalid characters for file paths
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in [' ', '_', '-'])
+        
+        if not folder_name:
+            messagebox.showerror("Error", "Invalid folder name. Please use alphanumeric characters, spaces, underscores, or hyphens.")
+            return
+            
+        # Create the full path
+        new_folder_path = os.path.join(COBBLEMON_FOLDER, folder_name)
+        
+        # Check if the folder already exists
+        if os.path.exists(new_folder_path):
+            messagebox.showwarning("Warning", f"Folder '{folder_name}' already exists.")
+            return
+            
+        # Create the folder
+        try:
+            os.makedirs(new_folder_path)
+            self.update_status(f"Created new folder: {new_folder_path}")
+            
+            # Update the dropdown and select the new folder
+            self.update_folder_dropdown()
+            self.folder_var.set(new_folder_path)
+            self.current_folder = new_folder_path
+            
+            # Load (empty) data from the new folder
+            self.load_pokemon_data()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create folder: {str(e)}")
 
 
 
