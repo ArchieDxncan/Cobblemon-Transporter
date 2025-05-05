@@ -296,6 +296,65 @@ def merge_pokemon_data(existing_slot, new_data):
         })
         persistent_data['Memories'] = memories
 
+    # Add egg data
+    if 'egg_location' in new_data:
+        persistent_data['EggLocation'] = nbtlib.String(new_data['egg_location'])
+    if 'egg_date' in new_data:
+        persistent_data['EggDate'] = nbtlib.String(new_data['egg_date'])
+    if 'is_egg' in new_data:
+        persistent_data['IsEgg'] = nbtlib.Byte(1 if new_data['is_egg'] else 0)
+
+    # Add Pokérus data
+    if 'pokerus_strain' in new_data:
+        persistent_data['PokerusStrain'] = nbtlib.Int(new_data['pokerus_strain'])
+    if 'pokerus_days' in new_data:
+        persistent_data['PokerusDays'] = nbtlib.Int(new_data['pokerus_days'])
+
+    # Add handler data
+    if 'current_handler' in new_data:
+        persistent_data['CurrentHandler'] = nbtlib.Int(new_data['current_handler'])
+    if 'handling_trainer_name' in new_data:
+        persistent_data['HandlingTrainerName'] = nbtlib.String(new_data['handling_trainer_name'])
+    if 'handling_trainer_gender' in new_data:
+        persistent_data['HandlingTrainerGender'] = nbtlib.Int(new_data['handling_trainer_gender'])
+    if 'handling_trainer_friendship' in new_data:
+        persistent_data['HandlingTrainerFriendship'] = nbtlib.Int(new_data['handling_trainer_friendship'])
+    if 'original_trainer_gender' in new_data:
+        persistent_data['OriginalTrainerGender'] = nbtlib.Int(new_data['original_trainer_gender'])
+
+    # Add ability and nature data
+    if 'ability_number' in new_data:
+        persistent_data['AbilityNumber'] = nbtlib.Int(new_data['ability_number'])
+    if 'stat_nature' in new_data:
+        if new_data['stat_nature']:  # Only set if not empty
+            persistent_data['StatNature'] = nbtlib.String(new_data['stat_nature'])
+
+    # Add stats and type data
+    if 'characteristic' in new_data:
+        persistent_data['Characteristic'] = nbtlib.Int(new_data['characteristic'])
+    if 'tsv' in new_data:
+        persistent_data['TSV'] = nbtlib.Int(new_data['tsv'])
+    if 'psv' in new_data:
+        persistent_data['PSV'] = nbtlib.Int(new_data['psv'])
+    if 'hp_type' in new_data:
+        persistent_data['HPType'] = nbtlib.Int(new_data['hp_type'])
+    if 'hp_power' in new_data:
+        persistent_data['HPPower'] = nbtlib.Int(new_data['hp_power'])
+    if 'iv_total' in new_data:
+        persistent_data['IVTotal'] = nbtlib.Int(new_data['iv_total'])
+    if 'potential_rating' in new_data:
+        persistent_data['PotentialRating'] = nbtlib.Int(new_data['potential_rating'])
+
+    # Add relearn moves
+    if 'relearn_move1' in new_data:
+        persistent_data['RelearnMove1'] = nbtlib.Int(new_data['relearn_move1'])
+    if 'relearn_move2' in new_data:
+        persistent_data['RelearnMove2'] = nbtlib.Int(new_data['relearn_move2'])
+    if 'relearn_move3' in new_data:
+        persistent_data['RelearnMove3'] = nbtlib.Int(new_data['relearn_move3'])
+    if 'relearn_move4' in new_data:
+        persistent_data['RelearnMove4'] = nbtlib.Int(new_data['relearn_move4'])
+
     existing_slot['PersistentData'] = persistent_data
 
     return existing_slot

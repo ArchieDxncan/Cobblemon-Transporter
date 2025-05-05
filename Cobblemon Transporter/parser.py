@@ -350,6 +350,41 @@ def extract_pokemon_data(nbt_data, slot):
             "memory_variable": memory_data.get('MemoryVariable', 0),
         }
         
+        # Extract egg data
+        egg_location = persistent_data.get('EggLocation', '0')
+        egg_date = persistent_data.get('EggDate', '')
+        is_egg = bool(persistent_data.get('IsEgg', False))
+        
+        # Extract Pokérus data
+        pokerus_strain = int(persistent_data.get('PokerusStrain', 0))
+        pokerus_days = int(persistent_data.get('PokerusDays', 0))
+        
+        # Extract handler data
+        current_handler = int(persistent_data.get('CurrentHandler', 0))
+        handling_trainer_name = persistent_data.get('HandlingTrainerName', '')
+        handling_trainer_gender = int(persistent_data.get('HandlingTrainerGender', 0))
+        handling_trainer_friendship = int(persistent_data.get('HandlingTrainerFriendship', 0))
+        original_trainer_gender = int(persistent_data.get('OriginalTrainerGender', 0))
+        
+        # Extract ability and nature data
+        ability_number = int(persistent_data.get('AbilityNumber', 1))
+        stat_nature = persistent_data.get('StatNature', '')
+        
+        # Extract stats and type data
+        characteristic = int(persistent_data.get('Characteristic', -1))
+        tsv = int(persistent_data.get('TSV', 0))
+        psv = int(persistent_data.get('PSV', 0))
+        hp_type = int(persistent_data.get('HPType', 0))
+        hp_power = int(persistent_data.get('HPPower', 0))
+        iv_total = int(persistent_data.get('IVTotal', 0))
+        potential_rating = int(persistent_data.get('PotentialRating', 0))
+        
+        # Extract relearn moves
+        relearn_move1 = int(persistent_data.get('RelearnMove1', 0))
+        relearn_move2 = int(persistent_data.get('RelearnMove2', 0))
+        relearn_move3 = int(persistent_data.get('RelearnMove3', 0))
+        relearn_move4 = int(persistent_data.get('RelearnMove4', 0))
+        
         # Create a simple dictionary with extracted data
         pokemon_info = {
             "species": species,
@@ -390,7 +425,30 @@ def extract_pokemon_data(nbt_data, slot):
             "ribbons": ribbons,
             "relearn_flags": relearn_flags,
             "fateful_encounter": fateful_encounter,
-            "memories": memories
+            "memories": memories,
+            "egg_location": egg_location,
+            "egg_date": egg_date,
+            "is_egg": is_egg,
+            "pokerus_strain": pokerus_strain,
+            "pokerus_days": pokerus_days,
+            "current_handler": current_handler,
+            "handling_trainer_name": handling_trainer_name,
+            "handling_trainer_gender": handling_trainer_gender,
+            "handling_trainer_friendship": handling_trainer_friendship,
+            "original_trainer_gender": original_trainer_gender,
+            "ability_number": ability_number,
+            "stat_nature": stat_nature,
+            "characteristic": characteristic,
+            "tsv": tsv,
+            "psv": psv,
+            "hp_type": hp_type,
+            "hp_power": hp_power,
+            "iv_total": iv_total,
+            "potential_rating": potential_rating,
+            "relearn_move1": relearn_move1,
+            "relearn_move2": relearn_move2,
+            "relearn_move3": relearn_move3,
+            "relearn_move4": relearn_move4
         }
         
         # Add box and slot information if available
