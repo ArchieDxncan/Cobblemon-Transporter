@@ -6,8 +6,8 @@ from tkinter import messagebox, filedialog
 # Get the current script directory
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
-# Define the pokemon directory path
-pokemon_directory = os.path.join(current_directory, 'cobblemon')
+# Define the pokemon directory path (root cobblemon folder)
+pokemon_directory = os.path.join(current_directory, '..', 'cobblemon')
 
 # Function to show a confirmation popup
 #def confirm_import():
@@ -20,8 +20,8 @@ pokemon_directory = os.path.join(current_directory, 'cobblemon')
 #    print("Import canceled.")
 #    exit(0)
 
-# Locate PB8ToJson.exe in the same directory as this script
-pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+# Locate PB8ToJson.exe in the modules directory
+pb8_to_json_directory = os.path.join(current_directory, 'PokemonImporter')
 pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
 
 # Ensure the executable exists
@@ -43,8 +43,13 @@ if not pb8_files:
     print("No files selected.")
     exit(0)
 
+# Ensure the output directory exists
+if not os.path.exists(pokemon_directory):
+    os.makedirs(pokemon_directory)
+
 # Loop through the selected files and run PB8ToJson.exe on each
 for pb8_file in pb8_files:
+    # Run the converter
     subprocess.run([pb8_to_json_exe, pb8_file])
 
 print("Conversion completed.")

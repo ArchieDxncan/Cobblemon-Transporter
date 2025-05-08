@@ -10,6 +10,10 @@ from datetime import date
 import argparse
 import sys
 import threading
+from nbtlib import nbt
+from nbtlib.tag import Compound, List, String, Int, Float, Byte, Short, Long, Double, ByteArray, IntArray, LongArray
+import time
+import logging
 
 # Define colors directly in code
 THEME_PRIMARY = "#3f51b5"  # Primary blue
@@ -26,7 +30,7 @@ THEME_TEXT_SECONDARY = "#757575"  # Gray text
 uuid_cache = {}
 
 # Directory for cache
-CACHE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'uuid_cache.json')
 
 # Output directory
@@ -47,7 +51,7 @@ def select_file():
 def load_nbt(file_path):
     # Load the NBT file
     try:
-        nbt_file = nbtlib.load(file_path)
+        nbt_file = nbt.load(file_path)
         # Debug: Print the structure of the NBT file to understand it better
         print("NBT File Structure:")
         print(f"Type of nbt_file: {type(nbt_file)}")
@@ -143,18 +147,34 @@ def fetch_username_from_uuid(uuid):
 
     # Mojang API endpoint to get username from UUID
     url = f"https://api.mojang.com/user/profile/{uuid}"
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            username = data.get('name', 'Unknown')
-            # Cache the result
-            uuid_cache[uuid] = username
-            return username
-        else:
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'PokemonPC/1.0'
+    }
+    
+    max_retries = 3
+    retry_delay = 1  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                username = data.get('name', 'Unknown')
+                # Cache the result
+                uuid_cache[uuid] = username
+                return username
+            elif response.status_code == 429:  # Rate limit
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
             return 'Unknown'
-    except Exception as e:
-        return 'Unknown'
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            return 'Unknown'
+    return 'Unknown'
 
 def extract_pokemon_data(nbt_data, slot):
     if not nbt_data:
@@ -941,6 +961,89 @@ class CobblemonParserUI:
         
         # Start the processing thread
         threading.Thread(target=process_thread, daemon=True).start()
+
+def safe_json_loads(response_text, max_size=32768):
+    """Safely parse JSON response with size validation and chunked handling."""
+    if not response_text or not response_text.strip():
+        logging.error("Empty response received")
+        return None
+        
+    if len(response_text) > max_size:
+        logging.warning(f"Response size ({len(response_text)} bytes) exceeds maximum size ({max_size} bytes)")
+        # Try to find a valid JSON boundary
+        last_valid_pos = response_text.rfind('}', 0, max_size)
+        if last_valid_pos != -1:
+            response_text = response_text[:last_valid_pos + 1]
+            logging.info(f"Truncated response to {len(response_text)} bytes at valid JSON boundary")
+        else:
+            logging.error("Could not find valid JSON boundary for truncation")
+            return None
+            
+    try:
+        return json.loads(response_text)
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON decode error: {str(e)}")
+        # Try to recover partial JSON
+        if e.pos > 0:
+            try:
+                return json.loads(response_text[:e.pos])
+            except:
+                logging.error("Failed to recover partial JSON")
+                pass
+        return None
+
+def fetch_pokemon_data(species):
+    """Fetch Pokemon data with proper error handling and chunked response support."""
+    # Use pokemon-species endpoint instead of pokemon
+    url = f"https://pokeapi.co/api/v2/pokemon-species/{species.lower()}"
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'PokemonPC/1.0'
+    }
+    
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=10, stream=True)
+            if response.status_code == 200:
+                # Use chunked response handling
+                chunks = []
+                total_size = 0
+                for chunk in response.iter_content(chunk_size=8192, decode_unicode=True):
+                    if chunk:
+                        chunks.append(chunk)
+                        total_size += len(chunk)
+                        if total_size > 32768:
+                            logging.warning(f"Response for {species} exceeds size limit, truncating")
+                            break
+                response_text = ''.join(chunks)
+                
+                # Check if response is empty
+                if not response_text.strip():
+                    logging.error(f"Empty response received for {species}")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                        continue
+                    return None
+                    
+                return safe_json_loads(response_text)
+            elif response.status_code == 429:  # Rate limit
+                logging.warning(f"Rate limit hit for {species}, attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+            else:
+                logging.error(f"HTTP {response.status_code} error for {species}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request error for {species}: {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            return None
+    return None
 
 def main():
     # Parse command line arguments

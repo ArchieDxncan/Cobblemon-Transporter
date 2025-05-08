@@ -253,11 +253,11 @@ def merge_pokemon_data(existing_slot, new_data):
         persistent_data['MetLevel'] = nbtlib.Int(new_data['met_level'])
     if 'met_date' in new_data:
         persistent_data['MetDate'] = nbtlib.String(new_data['met_date'])
-    if 'tid' in new_data:
+    if 'tid' in new_data and new_data['tid'] is not None:
         persistent_data['TID'] = nbtlib.Long(new_data['tid'])
-    if 'pid' in new_data:
+    if 'pid' in new_data and new_data['pid'] is not None:
         persistent_data['PID'] = nbtlib.Long(new_data['pid'])
-    if 'sid' in new_data:
+    if 'sid' in new_data and new_data['sid'] is not None:
         persistent_data['SID'] = nbtlib.Long(new_data['sid'])
     if 'language' in new_data:
         persistent_data['Language'] = nbtlib.Int(new_data['language'])

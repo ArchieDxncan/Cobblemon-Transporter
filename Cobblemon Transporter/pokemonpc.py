@@ -306,7 +306,7 @@ class PokemonHomeApp:
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Locate PB8ToJson.exe in the same directory as this script
-        pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+        pb8_to_json_directory = os.path.join(current_directory, 'modules', 'PokemonImporter')
         pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
 
         # Ensure the executable exists
@@ -414,21 +414,21 @@ class PokemonHomeApp:
             print(f"Exception details: {e}")
 
     def process_dat_file(self, file_path):
-        """Run parser.py on a dropped .dat file."""
+        """Run CobblemonImporter.py on a dropped .dat file."""
         try:
             self.update_status(f"Processing DAT file: {os.path.basename(file_path)}")
             
             # Get the current script directory
             current_directory = os.path.dirname(os.path.abspath(__file__))
-            parser_script = os.path.join(current_directory, "parser.py")
+            parser_script = os.path.join(current_directory, "modules", "CobblemonImporter.py")
             
-            # Check if parser.py exists
+            # Check if CobblemonImporter.py exists
             if not os.path.exists(parser_script):
                 messagebox.showerror("Error", f"Parser script not found at: {parser_script}")
                 self.update_status("Error: Parser script not found")
                 return
                 
-            # Run parser.py with the DAT file path as an argument
+            # Run CobblemonImporter.py with the DAT file path as an argument
             # Add the --output argument to specify the current folder
             process = subprocess.run(
                 [sys.executable, parser_script, "--cli", "--files", file_path, "--output", self.current_folder], 
@@ -525,7 +525,7 @@ class PokemonHomeApp:
     def convert_pk9_to_json(self, file_path):
         """Convert a .pk9 file to JSON using the PB8ToJson.py script."""
         try:
-            subprocess.run(["python", "PB8ToJson.py", file_path], check=True)
+            subprocess.run(["python", "PokemonImporter.py", file_path], check=True)
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"Conversion failed: {e}")
@@ -536,7 +536,7 @@ class PokemonHomeApp:
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Locate PB8ToJson.exe in the same directory as this script
-        pb8_to_json_directory = os.path.join(current_directory, 'PB8ToJson')
+        pb8_to_json_directory = os.path.join(current_directory, 'modules', 'PokemonImporter')
         pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
 
         # Ensure the executable exists
@@ -1413,10 +1413,17 @@ class PokemonHomeApp:
         
         json_file_path = self.selected_pokemon['file_path']
 
-        # Assuming the .exe is named JsonToPB8.exe and is in JsonToPB8 directory
-        converter_exe = "JsonToPB8/JsonToPB8.exe"
+        # Get the absolute path to the converter executable
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        converter_exe = os.path.join(current_dir, "modules", "PokemonExporter", "JsonToPB8.exe")
+        
+        # Debug information
+        print(f"Current directory: {current_dir}")
+        print(f"Looking for converter at: {converter_exe}")
+        print(f"File exists: {os.path.exists(converter_exe)}")
+        
         if not os.path.exists(converter_exe):
-            messagebox.showerror("Error", "Converter executable not found!")
+            messagebox.showerror("Error", f"Converter executable not found at: {converter_exe}\n\nCurrent directory: {current_dir}")
             self.update_status("Error: Converter executable not found")
             return
 
@@ -1536,37 +1543,37 @@ class PokemonHomeApp:
             self.update_status(f"Error loading Pokémon data: {str(e)}")
 
     def run_parser_script(self):
-        """Run the parser.py script."""
+        """Run the CobblemonImporter.py script."""
         try:
-            self.update_status("Running parser.py...")
-            subprocess.run(["python", "parser.py"], check=True)
-            self.update_status("parser.py executed successfully!")
+            self.update_status("Running CobblemonImporter.py...")
+            subprocess.run(["python", os.path.join("modules", "CobblemonImporter.py")], check=True)
+            self.update_status("CobblemonImporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
-            messagebox.showerror("Error", f"Failed to execute parser.py: {e}")
-            self.update_status(f"Error: Failed to execute parser.py: {str(e)}")
+            messagebox.showerror("Error", f"Failed to execute CobblemonImporter.py: {e}")
+            self.update_status(f"Error: Failed to execute CobblemonImporter.py: {str(e)}")
 
     def run_pb8_to_json_script(self):
-        """Run the PB8ToJson.py script."""
+        """Run the PokemonImporter.py script."""
         try:
-            self.update_status("Running PB8ToJson.py...")
-            subprocess.run(["python", "PB8ToJson.py"], check=True)
-            self.update_status("PB8ToJson.py executed successfully!")
+            self.update_status("Running PokemonImporter.py...")
+            subprocess.run(["python", os.path.join("modules", "PokemonImporter.py")], check=True)
+            self.update_status("PokemonImporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
-            messagebox.showerror("Error", f"Failed to execute PB8ToJson.py: {e}")
-            self.update_status(f"Error: Failed to execute PB8ToJson.py: {str(e)}")
+            messagebox.showerror("Error", f"Failed to execute PokemonImporter.py: {e}")
+            self.update_status(f"Error: Failed to execute PokemonImporter.py: {str(e)}")
 
     def run_export_script(self):
-        """Run the unparser.py script."""
+        """Run the CobblemonExporter.py script."""
         try:
-            self.update_status("Running unparser.py...")
-            subprocess.run(["python", "unparser.py"], check=True)
-            self.update_status("unparser.py executed successfully!")
+            self.update_status("Running CobblemonExporter.py...")
+            subprocess.run(["python", os.path.join("modules", "CobblemonExporter.py")], check=True)
+            self.update_status("CobblemonExporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
-            messagebox.showerror("Error", f"Failed to execute unparser.py: {e}")
-            self.update_status(f"Error: Failed to execute unparser.py: {str(e)}")
+            messagebox.showerror("Error", f"Failed to execute CobblemonExporter.py: {e}")
+            self.update_status(f"Error: Failed to execute CobblemonExporter.py: {str(e)}")
 
     def mass_convert_to_pb8(self):
         """Convert selected JSON files to .pb8 using an external .exe."""
@@ -1583,7 +1590,7 @@ class PokemonHomeApp:
             return
 
         # Assuming the .exe is named "converter.exe" and is in the same directory as the script
-        converter_exe = "JsonToPB8/JsonToPB8.exe"
+        converter_exe = "modules/PokemonExporter/JsonToPB8.exe"
         if not os.path.exists(converter_exe):
             messagebox.showerror("Error", "Converter executable not found!")
             self.update_status("Error: Converter executable not found")
@@ -2281,9 +2288,9 @@ class PokemonHomeApp:
 
             # Get directory of the current script
             current_directory = os.path.dirname(os.path.abspath(__file__))
-            unparser_script = os.path.join(current_directory, "unparser.py")
+            unparser_script = os.path.join(current_directory, "modules", "CobblemonExporter.py")
             
-            # Check if unparser.py exists
+            # Check if CobblemonExporter.py exists
             if not os.path.exists(unparser_script):
                 messagebox.showerror("Error", f"Unparser script not found at: {unparser_script}")
                 self.update_status("Error: Unparser script not found")
@@ -2296,7 +2303,7 @@ class PokemonHomeApp:
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
             
-            # Run unparser.py with the CLI argument for the JSON file
+            # Run CobblemonExporter.py with the CLI argument for the JSON file
             process = subprocess.run(
                 [sys.executable, unparser_script, "--json", self.selected_pokemon['file_path']],
                 check=False,
