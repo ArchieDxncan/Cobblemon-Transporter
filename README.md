@@ -15,7 +15,7 @@ Cobblemon Transporter is THE tool that bridges the gap between Pokémon and Mine
 
 ![Screenshot 1](https://github.com/ArchieDxncan/cobblemon-transporter/blob/main/Images/cobblenew.PNG)
 
-Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKHeX-Plugins) would be needed if you want to store in Pokémon Home or trade to a non-hacked Switch using SysBot.
+Converted Cobblemon are not classed as legal. Please use my fork of [ALM](https://github.com/ArchieDxncan/PKHeX-Plugins) if you would like to transfer into HOME or use a trade bot. It isn't perfect but most Pokémon should be able to legalise. For the best results please try to legalise a Pokémon in a game they are easily obtainable in.
 
 <details>
 <summary>Talonflame (Angry Bird)</summary>
@@ -63,14 +63,13 @@ Shown Pokémon are not classed as legal. [ALM](https://github.com/architdate/PKH
 - There is a help section on the toolbar. Either post an issue or message me on Discord @miniduncan if you need help!
 1. Launch the tool by running start.bat
 3. Use the file dropdown to import from either Pokémon or Cobblemon.
-4. Import .nbt files for Cobblemon or .pk8/.pk9 files for Pokémon.
+4. Import .dat files for Cobblemon or .pk files for Pokémon.
 5. The selected Pokémon will be imported into the Cobblemon folder as .json files. (Errors may occur as I haven't tested every single move/ability)
 6. Export Pokémon to Cobblemon. Note: Ensure you have a Pokemon in the .dat you are exporting to.
 5. Export Cobblemon to Pokémon. Note: You can use PKHeX to either import into your save file, then legalise the Pokémon using [ALM](https://github.com/architdate/PKHeX-Plugins)
 
 Cobblemon -> Pokémon will be exported as .cb9 (equivalent to .pk9) you can enable AllowIncompatibleConversion in PKHeX settings to transfer to pre Gen 9.
-
-If you're transferring from (Pokémon -> Cobblemon -> Pokémon), Some data such as Abilities and Movesets will have to be manually tuned to match the original Pokémon to be considered 100% legal.
+It is recommended to return a Pokémon to the game it was imported from otherwise values such as met location break.
 
 ---
 
