@@ -34,8 +34,8 @@ root = tk.Tk()
 root.withdraw()  # Hide the main window
 pb8_files = filedialog.askopenfilenames(
     initialdir=pokemon_directory,
-    title="Select .pb8 files",
-    filetypes=((".pk* files", "*.pk9"), ("All files", "*.*"))
+    title="Select Pokemon files",
+    filetypes=((".pk* files", "*.pk9"), (".pa9 files", "*.pa9"), (".pb8 files", "*.pb8"), ("All files", "*.*"))
 )
 
 # Check if any files were selected

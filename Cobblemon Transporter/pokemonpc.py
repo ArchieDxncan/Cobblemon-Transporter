@@ -210,7 +210,7 @@ class PokemonHomeApp:
             
             # Supported file extensions
             supported_extensions = {
-                '.pk9', '.cb9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json'
+                '.pk9', '.cb9', '.pa9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json'
             }
             
             for file_path in file_paths:
@@ -352,7 +352,7 @@ class PokemonHomeApp:
             # Supported file extensions
             supported_extensions = {
                 # Gen 9
-                '.pk9', '.cb9', 
+                '.pk9', '.cb9', '.pa9',
                 # Gen 8
                 '.pb8', '.pk8', 
                 # Gen 7
@@ -391,7 +391,7 @@ class PokemonHomeApp:
                 else:
                     messagebox.showwarning(
                         "Unsupported File", 
-                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pb8, .pk8, .dat)."
+                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pa9, .pb8, .pk8, .dat)."
                     )
                     self.update_status(f"Import failed: Unsupported file type - {os.path.basename(file_path)}")
                     error_count += 1
@@ -2119,7 +2119,8 @@ class PokemonHomeApp:
             
             # Gen 9
             "SL": "Pokémon Scarlet",
-            "VL": "Pokémon Violet"
+            "VL": "Pokémon Violet",
+            "ZA": "Pokémon Legends ZA"
         }
         
         origin_game = pokemon.get('origin_game', "Unknown")
