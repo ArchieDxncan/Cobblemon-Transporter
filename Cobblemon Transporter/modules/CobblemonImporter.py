@@ -15,6 +15,9 @@ from nbtlib.tag import Compound, List, String, Int, Float, Byte, Short, Long, Do
 import time
 import logging
 
+# Configuration
+TOTAL_BOXES = 40  # Change this value to adjust the total number of boxes
+
 # Define colors directly in code
 THEME_PRIMARY = "#3f51b5"  # Primary blue
 THEME_SECONDARY = "#303f9f"  # Darker blue
@@ -34,7 +37,125 @@ CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file
 CACHE_FILE = os.path.join(CACHE_DIR, 'uuid_cache.json')
 
 # Output directory
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cobblemon')
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'cobblemon')
+
+# Reverse mapping from Cobblemon mark/ribbon identifiers to PKHeX ribbon names
+COBBLEMON_TO_PKHEX_MAP = {
+    # Ribbons
+    "cobblemon:ribbon_champion_kalos": "ChampionKalos",
+    "cobblemon:ribbon_champion": "ChampionG3",
+    "cobblemon:ribbon_champion_sinnoh": "ChampionSinnoh",
+    "cobblemon:ribbon_best_friends": "BestFriends",
+    "cobblemon:ribbon_training": "Training",
+    "cobblemon:ribbon_battler_skillful": "BattlerSkillful",
+    "cobblemon:ribbon_battler_expert": "BattlerExpert",
+    "cobblemon:ribbon_effort": "Effort",
+    "cobblemon:ribbon_day_alert": "Alert",
+    "cobblemon:ribbon_day_shock": "Shock",
+    "cobblemon:ribbon_day_downcast": "Downcast",
+    "cobblemon:ribbon_day_careless": "Careless",
+    "cobblemon:ribbon_day_relax": "Relax",
+    "cobblemon:ribbon_day_snooze": "Snooze",
+    "cobblemon:ribbon_day_smile": "Smile",
+    "cobblemon:ribbon_syndicate_gorgeous": "Gorgeous",
+    "cobblemon:ribbon_syndicate_royal": "Royal",
+    "cobblemon:ribbon_syndicate_gorgeous_royal": "GorgeousRoyal",
+    "cobblemon:ribbon_artist": "Artist",
+    "cobblemon:ribbon_footprint": "Footprint",
+    "cobblemon:ribbon_record": "Record",
+    "cobblemon:ribbon_legend": "Legend",
+    "cobblemon:ribbon_event_country": "Country",
+    "cobblemon:ribbon_event_national": "National",
+    "cobblemon:ribbon_event_earth": "Earth",
+    "cobblemon:ribbon_event_world": "World",
+    "cobblemon:ribbon_event_classic": "Classic",
+    "cobblemon:ribbon_event_premier": "Premier",
+    "cobblemon:ribbon_event": "Event",
+    "cobblemon:ribbon_event_birthday": "Birthday",
+    "cobblemon:ribbon_event_special": "Special",
+    "cobblemon:ribbon_event_souvenir": "Souvenir",
+    "cobblemon:ribbon_event_wishing": "Wishing",
+    "cobblemon:ribbon_event_champion_battle": "ChampionBattle",
+    "cobblemon:ribbon_event_champion_regional": "ChampionRegional",
+    "cobblemon:ribbon_event_champion_national": "ChampionNational",
+    "cobblemon:ribbon_event_champion_world": "ChampionWorld",
+    "cobblemon:ribbon_memory_contest": "CountMemoryContest",
+    "cobblemon:ribbon_memory_battle": "CountMemoryBattle",
+    "cobblemon:ribbon_champion_hoenn": "ChampionG6Hoenn",
+    "cobblemon:ribbon_contest_super_star": "ContestStar",
+    "cobblemon:ribbon_contest_super_master_coolness": "MasterCoolness",
+    "cobblemon:ribbon_contest_super_master_beauty": "MasterBeauty",
+    "cobblemon:ribbon_contest_super_master_cuteness": "MasterCuteness",
+    "cobblemon:ribbon_contest_super_master_cleverness": "MasterCleverness",
+    "cobblemon:ribbon_contest_super_master_toughness": "MasterToughness",
+    "cobblemon:ribbon_champion_alola": "ChampionAlola",
+    "cobblemon:ribbon_battle_royal_master": "BattleRoyale",
+    "cobblemon:ribbon_battle_tree_great": "BattleTreeGreat",
+    "cobblemon:ribbon_battle_tree_master": "BattleTreeMaster",
+    "cobblemon:ribbon_champion_galar": "ChampionGalar",
+    "cobblemon:ribbon_battle_tower_master": "TowerMaster",
+    "cobblemon:ribbon_master_rank": "MasterRank",
+    "cobblemon:ribbon_hisui": "Hisui",
+    "cobblemon:ribbon_contest_super_star_twinkling": "TwinklingStar",
+    "cobblemon:ribbon_champion_paldea": "ChampionPaldea",
+    "cobblemon:ribbon_once-in-a-lifetime": "OnceInALifetime",
+    "cobblemon:ribbon_partner": "Partner",
+    # Marks
+    "cobblemon:mark_time_lunchtime": "MarkLunchtime",
+    "cobblemon:mark_time_sleepy-time": "MarkSleepyTime",
+    "cobblemon:mark_time_dusk": "MarkDusk",
+    "cobblemon:mark_time_dawn": "MarkDawn",
+    "cobblemon:mark_weather_cloudy": "MarkCloudy",
+    "cobblemon:mark_weather_rainy": "MarkRainy",
+    "cobblemon:mark_weather_stormy": "MarkStormy",
+    "cobblemon:mark_weather_snowy": "MarkSnowy",
+    "cobblemon:mark_weather_blizzard": "MarkBlizzard",
+    "cobblemon:mark_weather_dry": "MarkDry",
+    "cobblemon:mark_weather_sandstorm": "MarkSandstorm",
+    "cobblemon:mark_weather_misty": "MarkMisty",
+    "cobblemon:mark_destiny": "MarkDestiny",
+    "cobblemon:mark_fishing": "MarkFishing",
+    "cobblemon:mark_curry": "MarkCurry",
+    "cobblemon:mark_uncommon": "MarkUncommon",
+    "cobblemon:mark_rare": "MarkRare",
+    "cobblemon:mark_personality_rowdy": "MarkRowdy",
+    "cobblemon:mark_personality_absent-minded": "MarkAbsentMinded",
+    "cobblemon:mark_personality_jittery": "MarkJittery",
+    "cobblemon:mark_personality_excited": "MarkExcited",
+    "cobblemon:mark_personality_charismatic": "MarkCharismatic",
+    "cobblemon:mark_personality_calmness": "MarkCalmness",
+    "cobblemon:mark_personality_intense": "MarkIntense",
+    "cobblemon:mark_personality_zoned-out": "MarkZonedOut",
+    "cobblemon:mark_personality_joyful": "MarkJoyful",
+    "cobblemon:mark_personality_angry": "MarkAngry",
+    "cobblemon:mark_personality_smiley": "MarkSmiley",
+    "cobblemon:mark_personality_teary": "MarkTeary",
+    "cobblemon:mark_personality_upbeat": "MarkUpbeat",
+    "cobblemon:mark_personality_peeved": "MarkPeeved",
+    "cobblemon:mark_personality_intellectual": "MarkIntellectual",
+    "cobblemon:mark_personality_ferocious": "MarkFerocious",
+    "cobblemon:mark_personality_crafty": "MarkCrafty",
+    "cobblemon:mark_personality_scowling": "MarkScowling",
+    "cobblemon:mark_personality_kindly": "MarkKindly",
+    "cobblemon:mark_personality_flustered": "MarkFlustered",
+    "cobblemon:mark_personality_pumped-up": "MarkPumpedUp",
+    "cobblemon:mark_personality_zero_energy": "MarkZeroEnergy",
+    "cobblemon:mark_personality_prideful": "MarkPrideful",
+    "cobblemon:mark_personality_unsure": "MarkUnsure",
+    "cobblemon:mark_personality_humble": "MarkHumble",
+    "cobblemon:mark_personality_thorny": "MarkThorny",
+    "cobblemon:mark_personality_vigor": "MarkVigor",
+    "cobblemon:mark_personality_slump": "MarkSlump",
+    "cobblemon:mark_jumbo": "MarkJumbo",
+    "cobblemon:mark_mini": "MarkMini",
+    "cobblemon:mark_itemfinder": "MarkItemfinder",
+    "cobblemon:mark_partner": "MarkPartner",
+    "cobblemon:mark_gourmand": "MarkGourmand",
+    "cobblemon:mark_alpha": "MarkAlpha",
+    "cobblemon:mark_mightiest": "MarkMightiest",
+    "cobblemon:mark_titan": "MarkTitan",
+    "cobblemon:mark_revival": "MarkRevival",
+}
 
 # Parse command line arguments
 def parse_args():
@@ -192,7 +313,7 @@ def extract_pokemon_data(nbt_data, slot):
             # This is a party Pokémon - assign to box 0 (party)
             if slot.startswith('Slot') and slot[4:].isdigit():
                 try:
-                    box_number = 0  # Party Pokémon (box 0)
+                    box_number = 1  # Party Pokémon (box 1)
                     slot_number = int(slot[4:]) + 1  # Convert from 0-indexed to 1-indexed
                 except ValueError:
                     pass
@@ -335,6 +456,20 @@ def extract_pokemon_data(nbt_data, slot):
         uuid = list(pokemon_data.get('UUID', []))  # Convert UUID to a list
         scale_modifier = float(pokemon_data.get('ScaleModifier', 1.0))
         nickname = pokemon_data.get('Nickname', species.capitalize())
+        
+        # Extract Marks from top level (not PersistentData)
+        marks = []
+        if 'Marks' in pokemon_data:
+            cobblemon_marks = pokemon_data.get('Marks', [])
+            for cobblemon_mark in cobblemon_marks:
+                # Convert to string if it's an NBT String object
+                mark_str = str(cobblemon_mark) if hasattr(cobblemon_mark, '__str__') else cobblemon_mark
+                # Map Cobblemon identifier to PKHeX ribbon name
+                pkhex_name = COBBLEMON_TO_PKHEX_MAP.get(mark_str)
+                if pkhex_name:
+                    marks.append(pkhex_name)
+                else:
+                    print(f"Warning: Unknown Cobblemon mark/ribbon '{mark_str}' - skipping.")
 
         # Extract MetDate, MetLevel, and MetLocation from PersistentData
         persistent_data = pokemon_data.get('PersistentData', {})
@@ -443,6 +578,7 @@ def extract_pokemon_data(nbt_data, slot):
             "weight": weight,
             "scale": scale,
             "ribbons": ribbons,
+            "marks": marks,
             "relearn_flags": relearn_flags,
             "fateful_encounter": fateful_encounter,
             "memories": memories,
@@ -504,7 +640,7 @@ def find_available_box_slot():
             return 1, 1
         
         # Maximum box and slot numbers
-        MAX_BOXES = 30
+        MAX_BOXES = TOTAL_BOXES
         MAX_SLOTS_PER_BOX = 30
         
         # Keep track of occupied slots
@@ -611,10 +747,10 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
     
     # Check for different PC box structures
     box_structure = "unknown"
-    if any(f'Box{i}' in nbt_data for i in range(30)):
+    if any(f'Box{i}' in nbt_data for i in range(TOTAL_BOXES)):
         # Traditional Box0, Box1, etc. structure
         box_structure = "direct"
-        for box in range(30):
+        for box in range(TOTAL_BOXES):
             box_key = f'Box{box}'
             if box_key in nbt_data:
                 total_possible += sum(1 for slot in range(30) if f'Slot{slot}' in nbt_data[box_key])
@@ -625,10 +761,10 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
             for box_idx, box in enumerate(nbt_data['pc']['boxes']):
                 if 'pokemon' in box and isinstance(box['pokemon'], list):
                     total_possible += len(box['pokemon'])
-        elif any(f'Box{i}' in nbt_data['pc'] for i in range(30)):
+        elif any(f'Box{i}' in nbt_data['pc'] for i in range(TOTAL_BOXES)):
             # Structure with pc.Box0, pc.Box1, etc.
             box_structure = "pc_boxes_direct"
-            for box in range(30):
+            for box in range(TOTAL_BOXES):
                 box_key = f'Box{box}'
                 if box_key in nbt_data['pc']:
                     total_possible += sum(1 for slot in range(30) if f'Slot{slot}' in nbt_data['pc'][box_key])
@@ -660,7 +796,7 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
     # Process PC boxes based on detected structure
     if box_structure == "direct":
         # Process traditional Box0, Box1, etc. structure
-        for box in range(30):
+        for box in range(TOTAL_BOXES):
             box_key = f'Box{box}'
             if box_key in nbt_data:
                 for slot in range(30):
@@ -715,7 +851,7 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
     
     elif box_structure == "pc_boxes_direct":
         # Process pc.Box0, pc.Box1, etc. structure
-        for box in range(30):
+        for box in range(TOTAL_BOXES):
             box_key = f'Box{box}'
             if box_key in nbt_data['pc']:
                 for slot in range(30):
@@ -742,7 +878,7 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
                             progress_var.set((processed_count / total_possible) * 100)
     else:
         # Unknown structure, try all possibilities for each box
-        for box in range(30):
+        for box in range(TOTAL_BOXES):
             box_key = f'Box{box}'
             for slot in range(30):
                 slot_key = f'Slot{slot}'
@@ -761,7 +897,7 @@ def process_file(file_path, output_text, progress_var=None, status_label=None):
                     
                     # Update progress bar if provided
                     if progress_var:
-                        progress_var.set((processed_count / (30 * 30)) * 100)  # Approximate progress
+                        progress_var.set((processed_count / (TOTAL_BOXES * 30)) * 100)  # Approximate progress
     
     output_text.insert(tk.END, f"\n📊 Summary for {os.path.basename(file_path)}:\n", "heading")
     output_text.insert(tk.END, f"✅ Successfully processed {pokemon_count} Pokémon\n", "success")
@@ -1082,14 +1218,14 @@ def main():
             
             # Check for different PC box structures
             box_structure = "unknown"
-            if any(f'Box{i}' in nbt_data for i in range(30)):
+            if any(f'Box{i}' in nbt_data for i in range(TOTAL_BOXES)):
                 # Traditional Box0, Box1, etc. structure
                 box_structure = "direct"
             elif 'pc' in nbt_data:
                 if 'boxes' in nbt_data['pc'] and isinstance(nbt_data['pc']['boxes'], list):
                     # Structure with pc.boxes array
                     box_structure = "pc_boxes_array"
-                elif any(f'Box{i}' in nbt_data['pc'] for i in range(30)):
+                elif any(f'Box{i}' in nbt_data['pc'] for i in range(TOTAL_BOXES)):
                     # Structure with pc.Box0, pc.Box1, etc.
                     box_structure = "pc_boxes_direct"
             
@@ -1098,7 +1234,7 @@ def main():
             # Process PC boxes based on detected structure
             if box_structure == "direct":
                 # Process traditional Box0, Box1, etc. structure
-                for box in range(30):
+                for box in range(TOTAL_BOXES):
                     box_key = f'Box{box}'
                     if box_key in nbt_data:
                         for slot in range(30):
@@ -1137,7 +1273,7 @@ def main():
             
             elif box_structure == "pc_boxes_direct":
                 # Process pc.Box0, pc.Box1, etc. structure
-                for box in range(30):
+                for box in range(TOTAL_BOXES):
                     box_key = f'Box{box}'
                     if box_key in nbt_data['pc']:
                         for slot in range(30):
@@ -1157,7 +1293,7 @@ def main():
             else:
                 # Unknown structure, try all possibilities for each box
                 print("Unknown box structure, trying all possibilities...")
-                for box in range(30):
+                for box in range(TOTAL_BOXES):
                     box_key = f'Box{box}'
                     for slot in range(30):
                         slot_key = f'Slot{slot}'
@@ -1212,10 +1348,10 @@ def main():
                     
                     # Check for different PC box structures
                     box_structure = "unknown"
-                    if any(f'Box{i}' in nbt_data for i in range(30)):
+                    if any(f'Box{i}' in nbt_data for i in range(TOTAL_BOXES)):
                         # Traditional Box0, Box1, etc. structure
                         box_structure = "direct"
-                        for box in range(30):
+                        for box in range(TOTAL_BOXES):
                             box_key = f'Box{box}'
                             if box_key in nbt_data:
                                 for slot in range(30):

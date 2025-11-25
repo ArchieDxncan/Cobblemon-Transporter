@@ -14,7 +14,7 @@ import time
 GRID_ROWS = 5
 GRID_COLS = 6
 BOX_SIZE = GRID_ROWS * GRID_COLS  # 30 slots per box
-TOTAL_BOXES = 30  # Number of boxes per grid
+TOTAL_BOXES = 40  # Number of boxes per grid
 COBBLEMON_FOLDER = "cobblemon"  # Path to the folder where Cobblemon JSON files are stored
 SPRITES_FOLDER = "sprites/regular"  # Path to the folder where Pokémon sprites are stored
 SHINY_SPRITES_FOLDER = "sprites/shiny"  # Path to the folder where Shiny Pokémon sprites are stored
@@ -977,6 +977,10 @@ class PokemonHomeApp:
                     stat_name = "SpD"
                 elif stat_name == "Speed":
                     stat_name = "Spe"
+                elif stat_name == "Attack":
+                    stat_name = "Atk"
+                elif stat_name == "Defense":
+                    stat_name = "Def"
                 ev_list.append(f"{value} {stat_name}")
         
         if ev_list:
@@ -1001,6 +1005,10 @@ class PokemonHomeApp:
                     stat_name = "SpD"
                 elif stat_name == "Speed":
                     stat_name = "Spe"
+                elif stat_name == "Attack":
+                    stat_name = "Atk"
+                elif stat_name == "Defense":
+                    stat_name = "Def"
                 iv_list.append(f"{value} {stat_name}")
         
         if iv_list:

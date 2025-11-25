@@ -24,6 +24,124 @@ if sys.platform.startswith('win'):
 # Directory for JSON files
 JSON_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cobblemon')
 
+# Mapping from PKHeX ribbon names to Cobblemon mark/ribbon identifiers
+MARK_NAME_MAP = {
+    # Ribbons
+    "ChampionKalos": "cobblemon:ribbon_champion_kalos",
+    "ChampionG3": "cobblemon:ribbon_champion",
+    "ChampionSinnoh": "cobblemon:ribbon_champion_sinnoh",
+    "BestFriends": "cobblemon:ribbon_best_friends",
+    "Training": "cobblemon:ribbon_training",
+    "BattlerSkillful": "cobblemon:ribbon_battler_skillful",
+    "BattlerExpert": "cobblemon:ribbon_battler_expert",
+    "Effort": "cobblemon:ribbon_effort",
+    "Alert": "cobblemon:ribbon_day_alert",
+    "Shock": "cobblemon:ribbon_day_shock",
+    "Downcast": "cobblemon:ribbon_day_downcast",
+    "Careless": "cobblemon:ribbon_day_careless",
+    "Relax": "cobblemon:ribbon_day_relax",
+    "Snooze": "cobblemon:ribbon_day_snooze",
+    "Smile": "cobblemon:ribbon_day_smile",
+    "Gorgeous": "cobblemon:ribbon_syndicate_gorgeous",
+    "Royal": "cobblemon:ribbon_syndicate_royal",
+    "GorgeousRoyal": "cobblemon:ribbon_syndicate_gorgeous_royal",
+    "Artist": "cobblemon:ribbon_artist",
+    "Footprint": "cobblemon:ribbon_footprint",
+    "Record": "cobblemon:ribbon_record",
+    "Legend": "cobblemon:ribbon_legend",
+    "Country": "cobblemon:ribbon_event_country",
+    "National": "cobblemon:ribbon_event_national",
+    "Earth": "cobblemon:ribbon_event_earth",
+    "World": "cobblemon:ribbon_event_world",
+    "Classic": "cobblemon:ribbon_event_classic",
+    "Premier": "cobblemon:ribbon_event_premier",
+    "Event": "cobblemon:ribbon_event",
+    "Birthday": "cobblemon:ribbon_event_birthday",
+    "Special": "cobblemon:ribbon_event_special",
+    "Souvenir": "cobblemon:ribbon_event_souvenir",
+    "Wishing": "cobblemon:ribbon_event_wishing",
+    "ChampionBattle": "cobblemon:ribbon_event_champion_battle",
+    "ChampionRegional": "cobblemon:ribbon_event_champion_regional",
+    "ChampionNational": "cobblemon:ribbon_event_champion_national",
+    "ChampionWorld": "cobblemon:ribbon_event_champion_world",
+    "CountMemoryContest": "cobblemon:ribbon_memory_contest",
+    "CountMemoryBattle": "cobblemon:ribbon_memory_battle",
+    "ChampionG6Hoenn": "cobblemon:ribbon_champion_hoenn",
+    "ContestStar": "cobblemon:ribbon_contest_super_star",
+    "MasterCoolness": "cobblemon:ribbon_contest_super_master_coolness",
+    "MasterBeauty": "cobblemon:ribbon_contest_super_master_beauty",
+    "MasterCuteness": "cobblemon:ribbon_contest_super_master_cuteness",
+    "MasterCleverness": "cobblemon:ribbon_contest_super_master_cleverness",
+    "MasterToughness": "cobblemon:ribbon_contest_super_master_toughness",
+    "ChampionAlola": "cobblemon:ribbon_champion_alola",
+    "BattleRoyale": "cobblemon:ribbon_battle_royal_master",
+    "BattleTreeGreat": "cobblemon:ribbon_battle_tree_great",
+    "BattleTreeMaster": "cobblemon:ribbon_battle_tree_master",
+    "ChampionGalar": "cobblemon:ribbon_champion_galar",
+    "TowerMaster": "cobblemon:ribbon_battle_tower_master",
+    "MasterRank": "cobblemon:ribbon_master_rank",
+    "Hisui": "cobblemon:ribbon_hisui",
+    "TwinklingStar": "cobblemon:ribbon_contest_super_star_twinkling",
+    "ChampionPaldea": "cobblemon:ribbon_champion_paldea",
+    "OnceInALifetime": "cobblemon:ribbon_once-in-a-lifetime",
+    "Partner": "cobblemon:ribbon_partner",
+    # Marks
+    "MarkLunchtime": "cobblemon:mark_time_lunchtime",
+    "MarkSleepyTime": "cobblemon:mark_time_sleepy-time",
+    "MarkDusk": "cobblemon:mark_time_dusk",
+    "MarkDawn": "cobblemon:mark_time_dawn",
+    "MarkCloudy": "cobblemon:mark_weather_cloudy",
+    "MarkRainy": "cobblemon:mark_weather_rainy",
+    "MarkStormy": "cobblemon:mark_weather_stormy",
+    "MarkSnowy": "cobblemon:mark_weather_snowy",
+    "MarkBlizzard": "cobblemon:mark_weather_blizzard",
+    "MarkDry": "cobblemon:mark_weather_dry",
+    "MarkSandstorm": "cobblemon:mark_weather_sandstorm",
+    "MarkMisty": "cobblemon:mark_weather_misty",
+    "MarkDestiny": "cobblemon:mark_destiny",
+    "MarkFishing": "cobblemon:mark_fishing",
+    "MarkCurry": "cobblemon:mark_curry",
+    "MarkUncommon": "cobblemon:mark_uncommon",
+    "MarkRare": "cobblemon:mark_rare",
+    "MarkRowdy": "cobblemon:mark_personality_rowdy",
+    "MarkAbsentMinded": "cobblemon:mark_personality_absent-minded",
+    "MarkJittery": "cobblemon:mark_personality_jittery",
+    "MarkExcited": "cobblemon:mark_personality_excited",
+    "MarkCharismatic": "cobblemon:mark_personality_charismatic",
+    "MarkCalmness": "cobblemon:mark_personality_calmness",
+    "MarkIntense": "cobblemon:mark_personality_intense",
+    "MarkZonedOut": "cobblemon:mark_personality_zoned-out",
+    "MarkJoyful": "cobblemon:mark_personality_joyful",
+    "MarkAngry": "cobblemon:mark_personality_angry",
+    "MarkSmiley": "cobblemon:mark_personality_smiley",
+    "MarkTeary": "cobblemon:mark_personality_teary",
+    "MarkUpbeat": "cobblemon:mark_personality_upbeat",
+    "MarkPeeved": "cobblemon:mark_personality_peeved",
+    "MarkIntellectual": "cobblemon:mark_personality_intellectual",
+    "MarkFerocious": "cobblemon:mark_personality_ferocious",
+    "MarkCrafty": "cobblemon:mark_personality_crafty",
+    "MarkScowling": "cobblemon:mark_personality_scowling",
+    "MarkKindly": "cobblemon:mark_personality_kindly",
+    "MarkFlustered": "cobblemon:mark_personality_flustered",
+    "MarkPumpedUp": "cobblemon:mark_personality_pumped-up",
+    "MarkZeroEnergy": "cobblemon:mark_personality_zero_energy",
+    "MarkPrideful": "cobblemon:mark_personality_prideful",
+    "MarkUnsure": "cobblemon:mark_personality_unsure",
+    "MarkHumble": "cobblemon:mark_personality_humble",
+    "MarkThorny": "cobblemon:mark_personality_thorny",
+    "MarkVigor": "cobblemon:mark_personality_vigor",
+    "MarkSlump": "cobblemon:mark_personality_slump",
+    "MarkJumbo": "cobblemon:mark_jumbo",
+    "MarkMini": "cobblemon:mark_mini",
+    "MarkItemfinder": "cobblemon:mark_itemfinder",
+    "MarkPartner": "cobblemon:mark_partner",
+    "MarkGourmand": "cobblemon:mark_gourmand",
+    "MarkAlpha": "cobblemon:mark_alpha",
+    "MarkMightiest": "cobblemon:mark_mightiest",
+    "MarkTitan": "cobblemon:mark_titan",
+    "MarkRevival": "cobblemon:mark_revival",
+}
+
 def safe_print(text):
     """Print text with safe encoding handling."""
     try:
@@ -243,6 +361,18 @@ def merge_pokemon_data(existing_slot, new_data):
         existing_slot['ScaleModifier'] = nbtlib.Float(new_data['scale_modifier'])
     if 'nickname' in new_data:
         existing_slot['Nickname'] = nbtlib.String(new_data['nickname'])
+    
+    # Handle Marks (top level, not in PersistentData)
+    if 'marks' in new_data and new_data['marks']:
+        converted_marks = []
+        for mark_name in new_data['marks']:
+            mapped_name = MARK_NAME_MAP.get(mark_name)
+            if mapped_name:
+                converted_marks.append(nbtlib.String(mapped_name))
+            else:
+                safe_print(f"Warning: Unknown mark/ribbon '{mark_name}' - skipping.")
+        if converted_marks:
+            existing_slot['Marks'] = nbtlib.List[nbtlib.String](converted_marks)
 
     # Handle PersistentData/CobbleExtraData
     persistent_data = existing_slot.get('PersistentData', nbtlib.Compound())

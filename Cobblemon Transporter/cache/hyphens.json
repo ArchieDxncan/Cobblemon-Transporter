@@ -275,7 +275,7 @@
   "meanlook": "mean-look",
   "meditate": "meditate",
   "megadrain": "mega-drain",
-  "megahorn": "mega-horn",
+  "megahorn": "megahorn",
   "megakick": "mega-kick",
   "megapunch": "mega-punch",
   "memento": "memento",
@@ -319,7 +319,7 @@
   "neverendingnightmare": "never-ending-nightmare",
   "nightdaze": "night-daze",
   "nightmare": "nightmare",
-  "nightshade": "nightshade",
+  "nightshade": "night-shade",
   "nightslash": "night-slash",
   "nobleroar": "noble-roar",
   "nuzzle": "nuzzle",
@@ -923,5 +923,7 @@
   "dualwingbeat": "dual-wingbeat",
   "intrepidsword": "intrepid-sword",
   "bittermalice": "bitter-malice",
-  "windpower": "wind-power"
+  "windpower": "wind-power",
+  "aquacutter": "aqua-cutter",
+  "ceaselessedge": "ceaseless-edge"
 }
