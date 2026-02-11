@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
@@ -49,7 +50,21 @@ if not os.path.exists(pokemon_directory):
 
 # Loop through the selected files and run PB8ToJson.exe on each
 for pb8_file in pb8_files:
-    # Run the converter
-    subprocess.run([pb8_to_json_exe, pb8_file])
+    if sys.platform.startswith("linux"):
+        # We must have dotnetdesktop 9 installed in our wine prefix prior to running this
+        subprocess.run(
+            [
+                "/opt/wine-staging/bin/wine",
+                pb8_to_json_exe,
+                pb8_file
+            ],
+            env={
+                **os.environ,
+                "WINEPREFIX": os.path.expanduser("~/.winepkhex"),
+                "DOTNET_BUNDLE_EXTRACT_BASE_DIR": ""
+            }
+        )
+    else:
+        subprocess.run([pb8_to_json_exe, pb8_file])
 
 print("Conversion completed.")

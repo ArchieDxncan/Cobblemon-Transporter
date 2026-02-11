@@ -34,6 +34,31 @@ COLORS = {
     "dropdown_hover": "#EAF0F6"   # Light blue for dropdown hover
 }
 
+def run_windows_exe(exe_path, args, *, check=True, capture_output=False, text=True):
+    """
+    Run a Windows .exe on Linux/macOS via wine, or directly on Windows.
+    args: list of arguments (NOT including exe_path)
+    """
+    cmd = [exe_path] + list(args)
+
+    # If we're on Linux/macOS, run via wine.
+    if not sys.platform.startswith("win"):
+        cmd = [
+            "env",
+            "WINEPREFIX=" + os.path.expanduser("~/.winepkhex"),
+            "DOTNET_BUNDLE_EXTRACT_BASE_DIR=",
+            "wine",
+            exe_path,
+        ] + list(args)
+
+    # Use subprocess.run; caller decides whether to capture output.
+    return subprocess.run(
+        cmd,
+        check=check,
+        capture_output=capture_output,
+        text=text
+    )
+
 def create_rounded_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
     points = [x1+radius, y1,
               x1+radius, y1,
@@ -319,7 +344,7 @@ class PokemonHomeApp:
             os.makedirs(self.current_folder)
         
         # Run the executable with file path and output directory
-        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        run_windows_exe(pb8_to_json_exe, [file_path, "--output", self.current_folder], check=False)
         
         # Find the newly created JSON file
         try:
@@ -549,7 +574,7 @@ class PokemonHomeApp:
             os.makedirs(self.current_folder)
         
         # Run the executable with file path and output directory
-        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        run_windows_exe(pb8_to_json_exe, [file_path, "--output", self.current_folder], check=False)
         
         # Find the newly created JSON file and modify its box/slot information
         try:
@@ -1440,7 +1465,7 @@ class PokemonHomeApp:
             self.update_status(f"Converting {self.selected_pokemon['species']} to .cb9...")
             
             # Run the converter .exe with the JSON file as an argument
-            subprocess.run([converter_exe, json_file_path], check=True)
+            run_windows_exe(converter_exe, [json_file_path], check=True)
             
             # Show success message
             messagebox.showinfo("Success", f"Conversion successful: {os.path.basename(json_file_path)}.cb9 created!")
@@ -1616,7 +1641,7 @@ class PokemonHomeApp:
             try:
                 # Run the converter .exe with the JSON file as an argument
                 self.update_status(f"Converting {os.path.basename(json_file_path)}...")
-                subprocess.run([converter_exe, json_file_path], check=True)
+                run_windows_exe(converter_exe, [json_file_path], check=True)
                 successful += 1
             except subprocess.CalledProcessError:
                 failed += 1
