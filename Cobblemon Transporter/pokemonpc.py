@@ -235,7 +235,7 @@ class PokemonHomeApp:
             
             # Supported file extensions
             supported_extensions = {
-                '.pk9', '.cb9', '.pa9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json'
+                '.pk9', '.cb9', '.pa9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json', '.pkm'
             }
             
             for file_path in file_paths:
@@ -391,7 +391,8 @@ class PokemonHomeApp:
                 # Gen 3
                 '.pk3',
                 # Other
-                '.dat'
+                '.dat',
+                '.pkm'
             }
             processed_count = 0
             error_count = 0
@@ -416,7 +417,7 @@ class PokemonHomeApp:
                 else:
                     messagebox.showwarning(
                         "Unsupported File", 
-                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pa9, .pb8, .pk8, .dat)."
+                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pa9, .pb8, .pk8, .dat, .pkm)."
                     )
                     self.update_status(f"Import failed: Unsupported file type - {os.path.basename(file_path)}")
                     error_count += 1
