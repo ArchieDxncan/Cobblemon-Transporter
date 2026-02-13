@@ -34,6 +34,31 @@ COLORS = {
     "dropdown_hover": "#EAF0F6"   # Light blue for dropdown hover
 }
 
+def run_windows_exe(exe_path, args, *, check=True, capture_output=False, text=True):
+    """
+    Run a Windows .exe on Linux/macOS via wine, or directly on Windows.
+    args: list of arguments (NOT including exe_path)
+    """
+    cmd = [exe_path] + list(args)
+
+    # If we're on Linux/macOS, run via wine.
+    if not sys.platform.startswith("win"):
+        cmd = [
+            "env",
+            "WINEPREFIX=" + os.path.expanduser("~/.winepkhex"),
+            "DOTNET_BUNDLE_EXTRACT_BASE_DIR=",
+            "wine",
+            exe_path,
+        ] + list(args)
+
+    # Use subprocess.run; caller decides whether to capture output.
+    return subprocess.run(
+        cmd,
+        check=check,
+        capture_output=capture_output,
+        text=text
+    )
+
 def create_rounded_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
     points = [x1+radius, y1,
               x1+radius, y1,
@@ -210,7 +235,7 @@ class PokemonHomeApp:
             
             # Supported file extensions
             supported_extensions = {
-                '.pk9', '.cb9', '.pa9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json'
+                '.pk9', '.cb9', '.pa9', '.pb8', '.pk8', '.pk7', '.pb7', '.pk6', '.pk5', '.pk4', '.pk3', '.dat', '.json', '.pkm'
             }
             
             for file_path in file_paths:
@@ -319,7 +344,7 @@ class PokemonHomeApp:
             os.makedirs(self.current_folder)
         
         # Run the executable with file path and output directory
-        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        run_windows_exe(pb8_to_json_exe, [file_path, "--output", self.current_folder], check=False)
         
         # Find the newly created JSON file
         try:
@@ -366,7 +391,8 @@ class PokemonHomeApp:
                 # Gen 3
                 '.pk3',
                 # Other
-                '.dat'
+                '.dat',
+                '.pkm'
             }
             processed_count = 0
             error_count = 0
@@ -391,7 +417,7 @@ class PokemonHomeApp:
                 else:
                     messagebox.showwarning(
                         "Unsupported File", 
-                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pa9, .pb8, .pk8, .dat)."
+                        f"{os.path.basename(file_path)} is not a supported file type (.pk9, .cb9, .pa9, .pb8, .pk8, .dat, .pkm)."
                     )
                     self.update_status(f"Import failed: Unsupported file type - {os.path.basename(file_path)}")
                     error_count += 1
@@ -549,7 +575,7 @@ class PokemonHomeApp:
             os.makedirs(self.current_folder)
         
         # Run the executable with file path and output directory
-        subprocess.run([pb8_to_json_exe, file_path, "--output", self.current_folder])
+        run_windows_exe(pb8_to_json_exe, [file_path, "--output", self.current_folder], check=False)
         
         # Find the newly created JSON file and modify its box/slot information
         try:
@@ -1440,7 +1466,7 @@ class PokemonHomeApp:
             self.update_status(f"Converting {self.selected_pokemon['species']} to .cb9...")
             
             # Run the converter .exe with the JSON file as an argument
-            subprocess.run([converter_exe, json_file_path], check=True)
+            run_windows_exe(converter_exe, [json_file_path], check=True)
             
             # Show success message
             messagebox.showinfo("Success", f"Conversion successful: {os.path.basename(json_file_path)}.cb9 created!")
@@ -1616,7 +1642,7 @@ class PokemonHomeApp:
             try:
                 # Run the converter .exe with the JSON file as an argument
                 self.update_status(f"Converting {os.path.basename(json_file_path)}...")
-                subprocess.run([converter_exe, json_file_path], check=True)
+                run_windows_exe(converter_exe, [json_file_path], check=True)
                 successful += 1
             except subprocess.CalledProcessError:
                 failed += 1

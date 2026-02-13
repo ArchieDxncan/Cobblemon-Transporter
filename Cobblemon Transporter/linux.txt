@@ -1,0 +1,5 @@
+Cobblemon-Transporter seems to work well enough with Linux when using wine for the bundled Windows binaries.
+~/.winepkhex must exist and must have dotnetdesktop9 installed already. This wineprefix can be shared between Cobblemon-Transporter and PKHeX on Linux, thus saving disk space.
+
+An example of installing dotnetdesktop9 would look like this, run from your terminal on Linux:
+env WINEPREFIX=/home/$USER/.winepkhex winetricks dotnetdesktop9
