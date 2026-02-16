@@ -248,6 +248,72 @@ def find_existing_pokemon_and_free_slots_boxes(nbt_data, num_needed):
     
     return existing_location, free_locations[:num_needed]
 
+def normalize_stat_name(stat_name):
+    """
+    Normalize stat names to match Cobblemon's expected format.
+    Handles variations like defense/defence, special_defense/special_defence.
+    """
+    if not isinstance(stat_name, str):
+        return None
+    
+    stat_name = stat_name.lower().strip()
+    
+    # Map common variations to Cobblemon's expected format
+    stat_mapping = {
+        'defense': 'defence',
+        'def': 'defence',
+        'special_defense': 'special_defence',
+        'spdef': 'special_defence',
+        'sp_def': 'special_defence',
+        'sp_defense': 'special_defence',
+        'specialattack': 'special_attack',
+        'spatk': 'special_attack',
+        'sp_atk': 'special_attack',
+        'sp_attack': 'special_attack',
+    }
+    
+    # Check if it's a known variation
+    if stat_name in stat_mapping:
+        return stat_mapping[stat_name]
+    
+    # Check if it's already a valid stat name
+    valid_stats = ['hp', 'attack', 'defence', 'special_attack', 'special_defence', 'speed']
+    if stat_name in valid_stats:
+        return stat_name
+    
+    # Try to match partial names
+    for valid_stat in valid_stats:
+        if valid_stat.replace('_', '') == stat_name.replace('_', ''):
+            return valid_stat
+    
+    return None
+
+def validate_iv_value(value):
+    """Validate that an IV value is between 0 and 31."""
+    try:
+        iv = int(value)
+        if 0 <= iv <= 31:
+            return iv
+        else:
+            safe_print(f"Warning: IV value {iv} is out of range (0-31), clamping to {'31' if iv > 31 else '0'}")
+            return max(0, min(31, iv))
+    except (ValueError, TypeError):
+        safe_print(f"Warning: Invalid IV value '{value}', defaulting to 0")
+        return 0
+
+def validate_ev_value(value):
+    """Validate that an EV value is between 0 and 252."""
+    try:
+        ev = int(value)
+        if 0 <= ev <= 252:
+            return ev
+        else:
+            safe_print(f"Warning: EV value {ev} is out of range (0-252), clamping to {'252' if ev > 252 else '0'}")
+            return max(0, min(252, ev))
+    except (ValueError, TypeError):
+        safe_print(f"Warning: Invalid EV value '{value}', defaulting to 0")
+        return 0
+
 def merge_pokemon_data(existing_slot, new_data):
     """
     Merge new Pokémon data into the existing slot data.
@@ -263,19 +329,35 @@ def merge_pokemon_data(existing_slot, new_data):
         clean_ability = clean_ability.capitalize()
         existing_slot['Ability'] = nbtlib.Compound({'AbilityName': nbtlib.String(clean_ability)})
     
-    # Merge IVs
+    # Merge IVs with validation and normalization
     if 'ivs' in new_data:
-        ivs = existing_slot.get('IVs', nbtlib.Compound())
-        for stat, value in new_data['ivs'].items():
-            ivs[f'cobblemon:{stat}'] = nbtlib.Int(value)
-        existing_slot['IVs'] = ivs
+        if not isinstance(new_data['ivs'], dict):
+            safe_print("Warning: 'ivs' is not a dictionary, skipping IV merge")
+        else:
+            ivs = existing_slot.get('IVs', nbtlib.Compound())
+            for stat, value in new_data['ivs'].items():
+                normalized_stat = normalize_stat_name(stat)
+                if normalized_stat:
+                    validated_value = validate_iv_value(value)
+                    ivs[f'cobblemon:{normalized_stat}'] = nbtlib.Int(validated_value)
+                else:
+                    safe_print(f"Warning: Unknown stat name '{stat}' in IVs, skipping")
+            existing_slot['IVs'] = ivs
 
-    # Merge EVs
+    # Merge EVs with validation and normalization
     if 'evs' in new_data:
-        evs = existing_slot.get('EVs', nbtlib.Compound())
-        for stat, value in new_data['evs'].items():
-            evs[f'cobblemon:{stat}'] = nbtlib.Int(value)
-        existing_slot['EVs'] = evs
+        if not isinstance(new_data['evs'], dict):
+            safe_print("Warning: 'evs' is not a dictionary, skipping EV merge")
+        else:
+            evs = existing_slot.get('EVs', nbtlib.Compound())
+            for stat, value in new_data['evs'].items():
+                normalized_stat = normalize_stat_name(stat)
+                if normalized_stat:
+                    validated_value = validate_ev_value(value)
+                    evs[f'cobblemon:{normalized_stat}'] = nbtlib.Int(validated_value)
+                else:
+                    safe_print(f"Warning: Unknown stat name '{stat}' in EVs, skipping")
+            existing_slot['EVs'] = evs
 
     # Handle moves
     if 'moves' in new_data:

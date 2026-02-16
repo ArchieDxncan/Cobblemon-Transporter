@@ -1,0 +1,10 @@
+{
+  // Pin the workspace interpreter so files under `modules/` (and everywhere else)
+  // resolve packages from the project's venv created by `install.bat`.
+  "python.defaultInterpreterPath": "${workspaceFolder}\\\\venv\\\\Scripts\\\\python.exe",
+  "python.terminal.activateEnvironment": true,
+
+  // Helps Pylance resolve local imports when running/editing modules directly.
+  "python.analysis.extraPaths": ["${workspaceFolder}", "${workspaceFolder}\\\\modules"]
+}
+
