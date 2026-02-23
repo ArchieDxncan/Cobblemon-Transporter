@@ -1,4 +1,10 @@
-import nbtlib
+try:
+    import nbtlib
+except ImportError:
+    print("Error: nbtlib is not installed.")
+    print("Please run install.bat to set up the virtual environment and install dependencies.")
+    sys.exit(1)
+
 import random
 import json
 import hashlib
@@ -427,8 +433,19 @@ def extract_pokemon_data(nbt_data, slot):
             moves.append(move_name)  # Append the (potentially hyphenated) move name
     
         # Convert IVs and EVs to integers and ensure they are lists
-        ivs = {stat: int(pokemon_data['IVs'].get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
-        evs = {stat: int(pokemon_data['EVs'].get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
+        ivs_compound = pokemon_data.get('IVs', pokemon_data.get('Base', {}).get('IVs', {}))
+        if 'Base' in ivs_compound:
+            base_ivs = ivs_compound['Base']
+            ivs = {stat: int(base_ivs.get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
+        else:
+            ivs = {stat: int(ivs_compound.get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
+        
+        evs_compound = pokemon_data.get('EVs', pokemon_data.get('Base', {}).get('EVs', {}))
+        if 'Base' in evs_compound:
+            base_evs = evs_compound['Base']
+            evs = {stat: int(base_evs.get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
+        else:
+            evs = {stat: int(evs_compound.get(f'cobblemon:{stat}', 0)) for stat in ['attack', 'defence', 'hp', 'special_attack', 'special_defence', 'speed']}
         
         # Convert Nature, Original Trainer, Health, and Experience
         nature = pokemon_data['Nature'].split(":")[-1].capitalize()
