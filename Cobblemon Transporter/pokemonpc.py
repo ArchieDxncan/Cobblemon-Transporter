@@ -36,20 +36,14 @@ COLORS = {
 
 def run_windows_exe(exe_path, args, *, check=True, capture_output=False, text=True):
     """
-    Run a Windows .exe on Linux/macOS via wine, or directly on Windows.
+    Run a Windows .exe on Windows, or .NET dll on Linux/macOS via dotnet.
     args: list of arguments (NOT including exe_path)
     """
     cmd = [exe_path] + list(args)
 
-    # If we're on Linux/macOS, run via wine.
+    # If we're on Linux/macOS, run via dotnet.
     if not sys.platform.startswith("win"):
-        cmd = [
-            "env",
-            "WINEPREFIX=" + os.path.expanduser("~/.winepkhex"),
-            "DOTNET_BUNDLE_EXTRACT_BASE_DIR=",
-            "wine",
-            exe_path,
-        ] + list(args)
+        cmd = ["dotnet", exe_path] + list(args)
 
     # Use subprocess.run; caller decides whether to capture output.
     return subprocess.run(
@@ -330,9 +324,12 @@ class PokemonHomeApp:
         # Get the current script directory
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
-        # Locate PB8ToJson.exe in the same directory as this script
+        # Locate PB8ToJson executable in the same directory as this script
         pb8_to_json_directory = os.path.join(current_directory, 'modules', 'PokemonImporter')
-        pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+        if sys.platform.startswith("win"):
+            pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+        else:
+            pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.dll')
 
         # Ensure the executable exists
         if not os.path.isfile(pb8_to_json_exe):
@@ -557,13 +554,16 @@ class PokemonHomeApp:
             messagebox.showerror("Error", f"Conversion failed: {e}")
     
     def convert_file_to_json(self, file_path):
-        """Convert a file to JSON using the PB8ToJson.exe tool."""
+        """Convert a file to JSON using the PB8ToJson tool."""
         # Get the current script directory
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
-        # Locate PB8ToJson.exe in the same directory as this script
+        # Locate PB8ToJson executable in the same directory as this script
         pb8_to_json_directory = os.path.join(current_directory, 'modules', 'PokemonImporter')
-        pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+        if sys.platform.startswith("win"):
+            pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+        else:
+            pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.dll')
 
         # Ensure the executable exists
         if not os.path.isfile(pb8_to_json_exe):
@@ -1449,7 +1449,10 @@ class PokemonHomeApp:
 
         # Get the absolute path to the converter executable
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        converter_exe = os.path.join(current_dir, "modules", "PokemonExporter", "JsonToPB8.exe")
+        if sys.platform.startswith("win"):
+            converter_exe = os.path.join(current_dir, "modules", "PokemonExporter", "JsonToPB8.exe")
+        else:
+            converter_exe = os.path.join(current_dir, "modules", "PokemonExporter", "JsonToPB8.dll")
         
         # Debug information
         print(f"Current directory: {current_dir}")
@@ -1623,8 +1626,11 @@ class PokemonHomeApp:
             # User canceled the file selection
             return
 
-        # Assuming the .exe is named "converter.exe" and is in the same directory as the script
-        converter_exe = "modules/PokemonExporter/JsonToPB8.exe"
+        # Assuming the converter is in the modules/PokemonExporter directory
+        if sys.platform.startswith("win"):
+            converter_exe = "modules/PokemonExporter/JsonToPB8.exe"
+        else:
+            converter_exe = "modules/PokemonExporter/JsonToPB8.dll"
         if not os.path.exists(converter_exe):
             messagebox.showerror("Error", "Converter executable not found!")
             self.update_status("Error: Converter executable not found")

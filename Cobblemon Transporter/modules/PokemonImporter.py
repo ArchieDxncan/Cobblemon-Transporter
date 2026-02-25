@@ -21,9 +21,12 @@ pokemon_directory = os.path.join(current_directory, '..', 'cobblemon')
 #    print("Import canceled.")
 #    exit(0)
 
-# Locate PB8ToJson.exe in the modules directory
+# Locate PB8ToJson executable in the modules directory
 pb8_to_json_directory = os.path.join(current_directory, 'PokemonImporter')
-pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+if sys.platform.startswith("win"):
+    pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.exe')
+else:
+    pb8_to_json_exe = os.path.join(pb8_to_json_directory, 'PB8ToJson.dll')
 
 # Ensure the executable exists
 if not os.path.isfile(pb8_to_json_exe):
@@ -48,7 +51,7 @@ if not pb8_files:
 if not os.path.exists(pokemon_directory):
     os.makedirs(pokemon_directory)
 
-# Loop through the selected files and run PB8ToJson.exe on each
+# Loop through the selected files and run PB8ToJson on each
 for pb8_file in pb8_files:
     if sys.platform.startswith("linux"):
         # We must have dotnetdesktop 9 installed in our wine prefix prior to running this
@@ -64,7 +67,9 @@ for pb8_file in pb8_files:
                 "DOTNET_BUNDLE_EXTRACT_BASE_DIR": ""
             }
         )
-    else:
+    elif sys.platform == "darwin":  # macOS
+        subprocess.run(["dotnet", pb8_to_json_exe, pb8_file])
+    else:  # Windows
         subprocess.run([pb8_to_json_exe, pb8_file])
 
 print("Conversion completed.")

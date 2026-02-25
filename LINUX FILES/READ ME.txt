@@ -1,5 +1,24 @@
-Cobblemon-Transporter seems to work well enough with Linux when using wine for the bundled Windows binaries.
-~/.winepkhex must exist and must have dotnetdesktop9 installed already. This wineprefix can be shared between Cobblemon-Transporter and PKHeX on Linux, thus saving disk space.
+Cobblemon-Transporter now supports Linux natively without Wine!
 
-An example of installing dotnetdesktop9 would look like this, run from your terminal on Linux:
+The application uses .NET DLLs that run directly on Linux with the .NET runtime installed.
+
+Prerequisites:
+- Python 3.8+
+- .NET 9.0 runtime
+- tkinter support
+
+Installation:
+1. Copy these files into the main Cobblemon Transporter folder
+2. Run: chmod +x install.sh start.sh
+3. Run: ./install.sh
+4. Run: ./start.sh
+
+For .NET installation on Ubuntu/Debian:
+wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update
+sudo apt-get install -y dotnet-runtime-9.0
+
+The old Wine method is no longer needed, but if you prefer Wine, ensure ~/.winepkhex exists with dotnetdesktop9:
 env WINEPREFIX=/home/$USER/.winepkhex winetricks dotnetdesktop9

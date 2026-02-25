@@ -14,7 +14,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the application
-python pokemonpc.py
+python3 pokemonpc.py
 
 # Exit with the same code as python
 exit $?

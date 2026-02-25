@@ -8,6 +8,16 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Check if .NET is available
+if ! command -v dotnet &> /dev/null; then
+    echo "Warning: .NET runtime not found."
+    echo "Please install .NET 9.0 runtime:"
+    echo "  Ubuntu/Debian: Follow https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu"
+    echo "  Fedora: sudo dnf install dotnet-runtime-9.0"
+    echo "  Or download from: https://dotnet.microsoft.com/download"
+    echo "Continuing anyway, but the app may not work without .NET..."
+fi
+
 # Install python3-tk if not available (for tkinter)
 if ! dpkg -l | grep -q python3-tk; then
     echo "Installing python3-tk..."
