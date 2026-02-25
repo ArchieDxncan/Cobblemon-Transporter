@@ -340,8 +340,9 @@ def merge_pokemon_data(existing_slot, new_data):
         if not isinstance(new_data['ivs'], dict):
             safe_print("Warning: 'ivs' is not a dictionary, skipping IV merge")
         else:
-            ivs = existing_slot.get('IVs', nbtlib.Compound())
-            base = ivs.get('Base', nbtlib.Compound())
+            ivs = nbtlib.Compound()
+            base = nbtlib.Compound()
+            hyper_trained = nbtlib.Compound()  # Empty compound
             for stat, value in new_data['ivs'].items():
                 normalized_stat = normalize_stat_name(stat)
                 if normalized_stat:
@@ -350,6 +351,7 @@ def merge_pokemon_data(existing_slot, new_data):
                 else:
                     safe_print(f"Warning: Unknown stat name '{stat}' in IVs, skipping")
             ivs['Base'] = base
+            ivs['HyperTrained'] = hyper_trained
             existing_slot['IVs'] = ivs
 
     # Merge EVs with validation and normalization
@@ -357,16 +359,14 @@ def merge_pokemon_data(existing_slot, new_data):
         if not isinstance(new_data['evs'], dict):
             safe_print("Warning: 'evs' is not a dictionary, skipping EV merge")
         else:
-            evs = existing_slot.get('EVs', nbtlib.Compound())
-            base = evs.get('Base', nbtlib.Compound())
+            evs = nbtlib.Compound()  # Start fresh
             for stat, value in new_data['evs'].items():
                 normalized_stat = normalize_stat_name(stat)
                 if normalized_stat:
                     validated_value = validate_ev_value(value)
-                    base[f'cobblemon:{normalized_stat}'] = nbtlib.Int(validated_value)
+                    evs[f'cobblemon:{normalized_stat}'] = nbtlib.Int(validated_value)
                 else:
                     safe_print(f"Warning: Unknown stat name '{stat}' in EVs, skipping")
-            evs['Base'] = base
             existing_slot['EVs'] = evs
 
     # Handle moves
