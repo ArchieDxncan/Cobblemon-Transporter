@@ -1580,7 +1580,7 @@ class PokemonHomeApp:
         """Run the CobblemonImporter.py script."""
         try:
             self.update_status("Running CobblemonImporter.py...")
-            subprocess.run(["python", os.path.join("modules", "CobblemonImporter.py")], check=True)
+            subprocess.run([sys.executable, os.path.join("modules", "CobblemonImporter.py")], check=True)
             self.update_status("CobblemonImporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
@@ -1591,7 +1591,7 @@ class PokemonHomeApp:
         """Run the PokemonImporter.py script."""
         try:
             self.update_status("Running PokemonImporter.py...")
-            subprocess.run(["python", os.path.join("modules", "PokemonImporter.py")], check=True)
+            subprocess.run([sys.executable, os.path.join("modules", "PokemonImporter.py")], check=True)
             self.update_status("PokemonImporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:
@@ -1602,7 +1602,7 @@ class PokemonHomeApp:
         """Run the CobblemonExporter.py script."""
         try:
             self.update_status("Running CobblemonExporter.py...")
-            subprocess.run(["python", os.path.join("modules", "CobblemonExporter.py")], check=True)
+            subprocess.run([sys.executable, os.path.join("modules", "CobblemonExporter.py")], check=True)
             self.update_status("CobblemonExporter.py executed successfully!")
             self.load_pokemon_data()
         except subprocess.CalledProcessError as e:

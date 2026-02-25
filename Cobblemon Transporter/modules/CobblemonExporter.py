@@ -1,4 +1,10 @@
-import nbtlib
+try:
+    import nbtlib
+except ImportError:
+    print("Error: nbtlib is not installed.")
+    print("Please run install.bat to set up the virtual environment and install dependencies.")
+    sys.exit(1)
+
 import json
 import os
 import tkinter as tk
