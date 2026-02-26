@@ -71,4 +71,4 @@ else
     echo ""
     echo "Error: Failed to install dependencies."
     exit 1
-fi</content>
+fi
