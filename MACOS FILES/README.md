@@ -5,7 +5,7 @@ This folder contains macOS-specific files to run the Cobblemon Transporter appli
 ## Prerequisites
 
 - macOS (tested on macOS 12+)
-- Python 3.8 or higher (install via Homebrew: `brew install python`)
+- Python 3.12 or higher (install via https://python.org)
 - .NET 9.0 runtime (install via Homebrew: `brew install --cask dotnet-sdk`)
 
 ## Setup Instructions
@@ -32,12 +32,12 @@ This folder contains macOS-specific files to run the Cobblemon Transporter appli
 ## Troubleshooting
 
 - If you get permission errors, make the scripts executable: `chmod +x install.sh start.sh`
-- If tkinter doesn't work, ensure Python was installed with tkinter support (Homebrew's python includes it).
+- If tkinter doesn't work, ensure Python was installed with tkinter support (Python that ships with MacOS has a deprecated version of tkinter).
 - The application uses .NET DLLs for data conversion, so .NET 9.0 runtime is required.
-- If you encounter issues with the GUI, try running from a different terminal or check that XQuartz is installed for GUI apps.
+- If you encounter issues with the GUI ensure you do the tkinter step above.
 
 ## Notes
 
 - This application is a Pokémon data management tool for the Cobblemon Minecraft mod.
 - The macOS version uses native .NET DLLs instead of Windows executables.
-- All features should work identically to the Windows version.</content>
+- All features should work identically to the Windows version.
